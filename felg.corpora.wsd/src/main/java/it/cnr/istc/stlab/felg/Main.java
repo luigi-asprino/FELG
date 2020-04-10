@@ -127,7 +127,7 @@ public class Main {
 		}
 
 		public boolean isReady() {
-			return nwd.isReady();
+			return nwd!=null && nwd.isReady();
 		}
 	}
 }
