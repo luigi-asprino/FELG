@@ -1,4 +1,5 @@
 package it.cnr.istc.stlab.felg;
+
 import getalp.wsd.common.wordnet.WordnetHelper;
 import getalp.wsd.method.Disambiguator;
 import getalp.wsd.method.FirstSenseDisambiguator;
@@ -17,122 +18,151 @@ import java.util.stream.Collectors;
 
 // NeuralWSDDecode adapted from https://github.com/getalp/disambiguate
 
-public class NeuralWSDDecode
-{
-    public static void main(String[] args) throws Exception
-    {
-        new NeuralWSDDecode().decode(args);
-    }
+public class NeuralWSDDecode {
+	private String python_path, data_path;
+	private List<String> weights;
 
-    private boolean filterLemma;
+	public static void main(String[] args) throws Exception {
+		new NeuralWSDDecode().decode(args);
+	}
 
-    private boolean mfsBackoff;
+	public NeuralWSDDecode(String[] args) throws Exception {
+		decode(args);
+	}
 
-    private Disambiguator firstSenseDisambiguator;
+	public NeuralWSDDecode() throws Exception {
+	}
 
-    private NeuralDisambiguator neuralDisambiguator;
+	public NeuralWSDDecode(String python_path, String data_path, List<String> weights, BufferedWriter writer,
+			BufferedReader reader) throws Exception {
+		this.python_path = python_path;
+		this.data_path = data_path;
+		this.weights = weights;
+		this.writer = writer;
+		this.reader = reader;
+		decode(new String[] {});
+	}
 
-    private BufferedWriter writer;
+	private boolean filterLemma;
 
-    private BufferedReader reader;
+	private boolean mfsBackoff;
 
-    private void decode(String[] args) throws Exception
-    {
-        ArgumentParser parser = new ArgumentParser();
-        parser.addArgument("python_path");
-        parser.addArgument("data_path");
-        parser.addArgumentList("weights");
-        parser.addArgument("lowercase", "false");
-        parser.addArgument("sense_compression_hypernyms", "true");
-        parser.addArgument("sense_compression_instance_hypernyms", "false");
-        parser.addArgument("sense_compression_antonyms", "false");
-        parser.addArgument("sense_compression_file", "");
-        parser.addArgument("clear_text", "true");
-        parser.addArgument("batch_size", "1");
-        parser.addArgument("truncate_max_length", "150");
-        parser.addArgument("filter_lemma", "true");
-        parser.addArgument("mfs_backoff", "true");
-        if (!parser.parse(args)) return;
+	private Disambiguator firstSenseDisambiguator;
 
-        String pythonPath = parser.getArgValue("python_path");
-        String dataPath = parser.getArgValue("data_path");
-        List<String> weights = parser.getArgValueList("weights");
-        boolean lowercase = parser.getArgValueBoolean("lowercase");
-        boolean senseCompressionHypernyms = parser.getArgValueBoolean("sense_compression_hypernyms");
-        boolean senseCompressionInstanceHypernyms = parser.getArgValueBoolean("sense_compression_instance_hypernyms");
-        boolean senseCompressionAntonyms = parser.getArgValueBoolean("sense_compression_antonyms");
-        String senseCompressionFile = parser.getArgValue("sense_compression_file");
-        boolean clearText = parser.getArgValueBoolean("clear_text");
-        int batchSize = parser.getArgValueInteger("batch_size");
-        int truncateMaxLength = parser.getArgValueInteger("truncate_max_length");
-        filterLemma = parser.getArgValueBoolean("filter_lemma");
-        mfsBackoff = parser.getArgValueBoolean("mfs_backoff");
+	private NeuralDisambiguator neuralDisambiguator;
 
-        Map<String, String> senseCompressionClusters = null;
-        if (senseCompressionHypernyms || senseCompressionAntonyms)
-        {
-            senseCompressionClusters = WordnetUtils.getSenseCompressionClusters(WordnetHelper.wn30(), senseCompressionHypernyms, senseCompressionInstanceHypernyms, senseCompressionAntonyms);
-        }
-        if (!senseCompressionFile.isEmpty())
-        {
-            senseCompressionClusters = WordnetUtils.getSenseCompressionClustersFromFile(senseCompressionFile);
-        }
+	private BufferedWriter writer;
 
-        CorpusPOSTaggerAndLemmatizer tagger = new CorpusPOSTaggerAndLemmatizer();
-        firstSenseDisambiguator = new FirstSenseDisambiguator(WordnetHelper.wn30());
-        neuralDisambiguator = new NeuralDisambiguator(pythonPath, dataPath, weights, clearText, batchSize);
-        neuralDisambiguator.lowercaseWords = lowercase;
-        neuralDisambiguator.filterLemma = filterLemma;
-        neuralDisambiguator.reducedOutputVocabulary = senseCompressionClusters;
+	private BufferedReader reader;
 
-        reader = new BufferedReader(new InputStreamReader(System.in));
-        writer = new BufferedWriter(new OutputStreamWriter(System.out));
-        List<Sentence> sentences = new ArrayList<>();
-        for (String line = reader.readLine(); line != null ; line = reader.readLine())
-        {
-            Sentence sentence = new Sentence(line);
-            if (sentence.getWords().size() > truncateMaxLength)
-            {
-                sentence.getWords().stream().skip(truncateMaxLength).collect(Collectors.toList()).forEach(sentence::removeWord);
-            }
-            if (filterLemma)
-            {
-                tagger.tag(sentence.getWords());
-            }
-            sentences.add(sentence);
-            if (sentences.size() >= batchSize)
-            {
-                decodeSentenceBatch(sentences);
-                sentences.clear();
-            }
-        }
-        decodeSentenceBatch(sentences);
-        writer.close();
-        reader.close();
-        neuralDisambiguator.close();
-    }
+	private boolean ready;
 
-    private void decodeSentenceBatch(List<Sentence> sentences) throws IOException
-    {
-        neuralDisambiguator.disambiguateDynamicSentenceBatch(sentences, "wsd", "");
-        for (Sentence sentence : sentences)
-        {
-            if (mfsBackoff)
-            {
-                firstSenseDisambiguator.disambiguate(sentence, "wsd");
-            }
-            for (Word word : sentence.getWords())
-            {
-                writer.write(word.getValue().replace("|", "/"));
-                if (/*word.hasAnnotation("lemma") && word.hasAnnotation("pos") && */ word.hasAnnotation("wsd"))
-                {
-                    writer.write("|" + word.getAnnotationValue("wsd"));
-                }
-                writer.write(" ");
-            }
-            writer.newLine();
-        }
-        writer.flush();
-    }
+	private void decode(String[] args) throws Exception {
+		ArgumentParser parser = new ArgumentParser();
+		parser.addArgument("python_path", python_path);
+		parser.addArgument("data_path", data_path);
+		parser.addArgumentList("weights", weights);
+		parser.addArgument("lowercase", "false");
+		parser.addArgument("sense_compression_hypernyms", "true");
+		parser.addArgument("sense_compression_instance_hypernyms", "false");
+		parser.addArgument("sense_compression_antonyms", "false");
+		parser.addArgument("sense_compression_file", "");
+		parser.addArgument("clear_text", "true");
+		parser.addArgument("batch_size", "1");
+		parser.addArgument("truncate_max_length", "150");
+		parser.addArgument("filter_lemma", "true");
+		parser.addArgument("mfs_backoff", "true");
+		if (!parser.parse(args))
+			return;
+
+		String pythonPath = parser.getArgValue("python_path");
+		String dataPath = parser.getArgValue("data_path");
+		List<String> weights = parser.getArgValueList("weights");
+		boolean lowercase = parser.getArgValueBoolean("lowercase");
+		boolean senseCompressionHypernyms = parser.getArgValueBoolean("sense_compression_hypernyms");
+		boolean senseCompressionInstanceHypernyms = parser.getArgValueBoolean("sense_compression_instance_hypernyms");
+		boolean senseCompressionAntonyms = parser.getArgValueBoolean("sense_compression_antonyms");
+		String senseCompressionFile = parser.getArgValue("sense_compression_file");
+		boolean clearText = parser.getArgValueBoolean("clear_text");
+		int batchSize = parser.getArgValueInteger("batch_size");
+		int truncateMaxLength = parser.getArgValueInteger("truncate_max_length");
+		filterLemma = parser.getArgValueBoolean("filter_lemma");
+		mfsBackoff = parser.getArgValueBoolean("mfs_backoff");
+
+		Map<String, String> senseCompressionClusters = null;
+		if (senseCompressionHypernyms || senseCompressionAntonyms) {
+			senseCompressionClusters = WordnetUtils.getSenseCompressionClusters(WordnetHelper.wn30(),
+					senseCompressionHypernyms, senseCompressionInstanceHypernyms, senseCompressionAntonyms);
+		}
+		if (!senseCompressionFile.isEmpty()) {
+			senseCompressionClusters = WordnetUtils.getSenseCompressionClustersFromFile(senseCompressionFile);
+		}
+
+		CorpusPOSTaggerAndLemmatizer tagger = new CorpusPOSTaggerAndLemmatizer();
+		firstSenseDisambiguator = new FirstSenseDisambiguator(WordnetHelper.wn30());
+		neuralDisambiguator = new NeuralDisambiguator(pythonPath, dataPath, weights, clearText, batchSize);
+		neuralDisambiguator.lowercaseWords = lowercase;
+		neuralDisambiguator.filterLemma = filterLemma;
+		neuralDisambiguator.reducedOutputVocabulary = senseCompressionClusters;
+
+		if (reader == null)
+			reader = new BufferedReader(new InputStreamReader(System.in));
+		if (writer == null)
+			writer = new BufferedWriter(new OutputStreamWriter(System.out));
+		List<Sentence> sentences = new ArrayList<>();
+		ready = true;
+		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+			Sentence sentence = new Sentence(line);
+			if (sentence.getWords().size() > truncateMaxLength) {
+				sentence.getWords().stream().skip(truncateMaxLength).collect(Collectors.toList())
+						.forEach(sentence::removeWord);
+			}
+			if (filterLemma) {
+				tagger.tag(sentence.getWords());
+			}
+			sentences.add(sentence);
+			if (sentences.size() >= batchSize) {
+				decodeSentenceBatch(sentences);
+				sentences.clear();
+			}
+		}
+		decodeSentenceBatch(sentences);
+		writer.close();
+		reader.close();
+		neuralDisambiguator.close();
+	}
+
+	private void decodeSentenceBatch(List<Sentence> sentences) throws IOException {
+		neuralDisambiguator.disambiguateDynamicSentenceBatch(sentences, "wsd", "");
+		for (Sentence sentence : sentences) {
+			if (mfsBackoff) {
+				firstSenseDisambiguator.disambiguate(sentence, "wsd");
+			}
+			for (Word word : sentence.getWords()) {
+				writer.write(word.getValue().replace("|", "/"));
+				if (/* word.hasAnnotation("lemma") && word.hasAnnotation("pos") && */ word.hasAnnotation("wsd")) {
+					writer.write("|" + word.getAnnotationValue("wsd"));
+				}
+				writer.write(" ");
+			}
+			writer.newLine();
+		}
+		writer.flush();
+	}
+
+	public void setPython_path(String python_path) {
+		this.python_path = python_path;
+	}
+
+	public void setData_path(String data_path) {
+		this.data_path = data_path;
+	}
+
+	public void setWeights(List<String> weights) {
+		this.weights = weights;
+	}
+
+	public boolean isReady() {
+		return ready;
+	}
 }
-
