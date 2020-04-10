@@ -84,6 +84,12 @@
 			<groupId>it.cnr.istc.stlab</groupId>
 			<artifactId>lgu.commons</artifactId>
 			<version>0.0.6-dev</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.rdfhdt</groupId>
+					<artifactId>hdt-java-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 
