@@ -86,7 +86,7 @@ public class Main {
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
 					logger.trace("Processing " + aar.getTitle());
-					textOutputStream.write(aar.getAbstract(true).getBytes());
+					textOutputStream.write((aar.getAbstract(true)+"\n").getBytes());
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
 
 					AnnotatedWord aw;
