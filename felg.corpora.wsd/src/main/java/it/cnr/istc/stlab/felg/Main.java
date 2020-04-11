@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -81,19 +82,23 @@ public class Main {
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
 
 					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
-						List<CoreLabel> t = sentence.get(TokensAnnotation.class);
-						CoreLabel[] tokens = t.toArray(new CoreLabel[t.size()]);
-						List<Word> words = new ArrayList<>();
-						StringBuilder inputSentence = new StringBuilder();
-						for (int i = 0; i < tokens.length; i++) {
-							Word word = new Word(tokens[i].word());
-							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
-							inputSentence.append(
-									(tokens[i].word()) + "_" + tokens[i].get(PartOfSpeechAnnotation.class) + " ");
-						}
-						logger.trace("Disambiguating " + inputSentence.toString());
+//						List<CoreLabel> t = sentence.get(TokensAnnotation.class);
+//						CoreLabel[] tokens = t.toArray(new CoreLabel[t.size()]);
+//						List<Word> words = new ArrayList<>();
+//						StringBuilder inputSentence = new StringBuilder();
+//						for (int i = 0; i < tokens.length; i++) {
+//							Word word = new Word(tokens[i].word());
+//							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
+//							inputSentence.append(
+//									(tokens[i].word()) + "_" + tokens[i].get(PartOfSpeechAnnotation.class) + " ");
+//						}
+//						logger.trace("Disambiguating " + inputSentence.toString());
+						
+						String textSentence = sentence.get(TextAnnotation.class);
 
-						Sentence wsdSentence = new Sentence(words);
+
+						Sentence wsdSentence = new Sentence(textSentence);
+						posTagger.tag(wsdSentence.getWords());
 						lemmatizer.tag(wsdSentence.getWords());
 
 						try {
