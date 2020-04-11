@@ -82,23 +82,25 @@ public class Main {
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
 
 					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
-//						List<CoreLabel> t = sentence.get(TokensAnnotation.class);
-//						CoreLabel[] tokens = t.toArray(new CoreLabel[t.size()]);
-//						List<Word> words = new ArrayList<>();
-//						StringBuilder inputSentence = new StringBuilder();
-//						for (int i = 0; i < tokens.length; i++) {
-//							Word word = new Word(tokens[i].word());
-//							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
-//							inputSentence.append(
-//									(tokens[i].word()) + "_" + tokens[i].get(PartOfSpeechAnnotation.class) + " ");
-//						}
-//						logger.trace("Disambiguating " + inputSentence.toString());
+						List<CoreLabel> t = sentence.get(TokensAnnotation.class);
+						CoreLabel[] tokens = t.toArray(new CoreLabel[t.size()]);
+						List<Word> words = new ArrayList<>();
+						StringBuilder inputSentence = new StringBuilder();
+						for (int i = 0; i < tokens.length; i++) {
+							Word word = new Word(tokens[i].word());
+							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
+							inputSentence.append(
+									(tokens[i].word()) + "_" + tokens[i].get(PartOfSpeechAnnotation.class) + " ");
+							words.add(word);
+						}
+						logger.trace("Disambiguating " + inputSentence.toString());
+
+//						String textSentence = sentence.get(TextAnnotation.class);
+
+//						Sentence wsdSentence = new Sentence(textSentence);
+//						posTagger.tag(wsdSentence.getWords());
 						
-						String textSentence = sentence.get(TextAnnotation.class);
-
-
-						Sentence wsdSentence = new Sentence(textSentence);
-						posTagger.tag(wsdSentence.getWords());
+						Sentence wsdSentence = new Sentence(words);
 						lemmatizer.tag(wsdSentence.getWords());
 
 						try {
