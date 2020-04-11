@@ -25,6 +25,7 @@ import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 public class Main {
 
 	private static final Logger logger = LogManager.getLogger(Main.class);
+	public static final String STOP_TOKEN = "######STOP######";
 
 	public static void main(String[] args) throws CompressorException, IOException {
 		logger.info("Running FELG");

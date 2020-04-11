@@ -41,7 +41,7 @@ public class NeuralWSDDecode {
 	public BlockingQueue<AnnotatedWord> getOutChannel() {
 		return outWords;
 	}
-	
+
 	public BlockingQueue<String> getInChannel() {
 		return inSentences;
 	}
@@ -53,8 +53,7 @@ public class NeuralWSDDecode {
 	public NeuralWSDDecode() throws Exception {
 	}
 
-	public NeuralWSDDecode(String python_path, String data_path, List<String> weights)
-			throws Exception {
+	public NeuralWSDDecode(String python_path, String data_path, List<String> weights) throws Exception {
 		this.python_path = python_path;
 		this.data_path = data_path;
 		this.weights = weights;
@@ -133,7 +132,12 @@ public class NeuralWSDDecode {
 		ready.set(true);
 		logger.trace("Ready");
 		String line;
-		while((line = inSentences.take())!=null) {
+		while ((line = inSentences.take()) != null) {
+			if(line.equals(Main.STOP_TOKEN)) {
+				logger.info("Stopping WSD");
+				break;
+			}
+			
 			logger.trace("Disambiguating " + line);
 			Sentence sentence = new Sentence(line);
 			if (sentence.getWords().size() > truncateMaxLength) {
@@ -150,6 +154,7 @@ public class NeuralWSDDecode {
 				sentences.clear();
 			}
 			logger.trace("Batch decoded");
+			
 		}
 		decodeSentenceBatch(sentences);
 		neuralDisambiguator.close();
@@ -195,4 +200,5 @@ public class NeuralWSDDecode {
 	public boolean isReady() {
 		return ready.get();
 	}
+
 }
