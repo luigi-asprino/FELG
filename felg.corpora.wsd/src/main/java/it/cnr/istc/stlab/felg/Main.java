@@ -97,8 +97,9 @@ public class Main {
 						fos.write((aw.getWord() + "|" + aw.getSenseKey()).getBytes());
 						stop = aw.isLast();
 					}
-
-					fos.close();
+					logger.trace("Ending "+aar.getTitle());
+					fos.flush();
+					fos.close();	
 				}
 			}
 
