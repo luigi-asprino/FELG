@@ -69,6 +69,7 @@ public class Main {
 			// wait until the wsd is initialized
 			while (!r.isReady()) {
 				Thread.sleep(1000);
+				logger.trace("Not ready");
 			}
 
 			logger.info("WSD initialized");
