@@ -111,6 +111,8 @@ public class Main {
 					fos.flush();
 					fos.close();
 				}
+				// closing wsd
+				inChannel.add(null);
 			}
 
 		} catch (Exception e) {

@@ -40,8 +40,13 @@ public class ArticleReader {
 	}
 
 	public String getAbstract(boolean clean) {
-		if (clean)
-			return cleanText(text.substring(0, text.indexOf("Section::::")));
+		if (clean) {
+			if(text.indexOf("Section::::")>0) {
+				return cleanText(text.substring(0, text.indexOf("Section::::")));
+			}else {
+				return cleanText(text);
+			}
+		}
 		return text.substring(0, text.indexOf("Section::::"));
 	}
 
