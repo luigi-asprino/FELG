@@ -155,10 +155,12 @@ public class NeuralWSDDecode {
 
 	private void decodeSentenceBatch(List<Sentence> sentences) throws IOException {
 		neuralDisambiguator.disambiguateDynamicSentenceBatch(sentences, "wsd", "");
+		logger.info("Sentence dynamically disambiguated");
 		for (Sentence sentence : sentences) {
 			if (mfsBackoff) {
 				firstSenseDisambiguator.disambiguate(sentence, "wsd");
 			}
+			logger.info(sentence.toString()+" disambiguated!");
 			for (Word word : sentence.getWords()) {
 				writer.write(word.getValue().replace("|", "/"));
 				if (/* word.hasAnnotation("lemma") && word.hasAnnotation("pos") && */ word.hasAnnotation("wsd")) {
