@@ -175,6 +175,7 @@ public class NeuralWSDDecode {
 			System.out.println();
 		}
 		writer.flush();
+		System.out.println("end decode batch");
 	}
 
 	public void setPython_path(String python_path) {
