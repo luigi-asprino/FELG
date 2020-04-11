@@ -93,7 +93,7 @@ public class Main {
 									(tokens[i].word()) + "_" + tokens[i].get(PartOfSpeechAnnotation.class) + " ");
 							words.add(word);
 						}
-						logger.trace("Disambiguating " + inputSentence.toString());
+//						logger.trace("Disambiguating " + inputSentence.toString());
 
 //						String textSentence = sentence.get(TextAnnotation.class);
 
