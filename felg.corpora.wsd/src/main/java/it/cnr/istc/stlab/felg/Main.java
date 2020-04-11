@@ -58,6 +58,9 @@ public class Main {
 			List<String> weights = new ArrayList<>();
 			weights.add(config.getString("weights"));
 
+			long t0 = System.currentTimeMillis();
+			long count = 0;
+
 			// initialize WSD
 			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
 
@@ -72,7 +75,13 @@ public class Main {
 				ArchiveReader ar = new ArchiveReader(filepath);
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
-					logger.trace("Processing " + aar.getTitle());
+
+					long t1 = System.currentTimeMillis();
+					long elapsed = t1 - t0;
+					count++;
+					long timePerArticle = (long) ((double) elapsed / (double) count);
+
+					logger.trace("Processing " + aar.getTitle() + " " + timePerArticle + "ms");
 
 					Annotation annotation = new Annotation(aar.getAbstract(true));
 					pipeline.annotate(annotation);
@@ -95,28 +104,10 @@ public class Main {
 						lemmatizer.tag(wsdSentence.getWords());
 						sentenceBatch.add(wsdSentence);
 
-//						try {
-//							nwd.disambiguate(wsdSentence);
-//							StringBuilder sb = new StringBuilder();
-//							wsdSentence.getWords().forEach(w -> {
-//								sb.append(w.getValue());
-//								if (w.hasAnnotation("wsd")) {
-//									sb.append('|');
-//									sb.append(w.getAnnotationValue("wsd"));
-//								}
-//								sb.append(' ');
-//							});
-//							sb.append('\n');
-//							fos.write(sb.toString().getBytes());
-//							fos.flush();
-//						} catch (IOException e) {
-//							e.printStackTrace();
-//						}
-
 					});
 
 					nwd.disambiguateBatch(sentenceBatch);
-					
+
 					sentenceBatch.forEach(wsdSentence -> {
 						try {
 							StringBuilder sb = new StringBuilder();
