@@ -52,7 +52,6 @@ public class Main {
 			List<String> weights = new ArrayList<>();
 			weights.add(config.getString("weights"));
 
-
 			// initialize WSD
 			WSDRunnable r = new WSDRunnable(python_path, data_path, weights);
 			new Thread(r).start();
@@ -66,7 +65,7 @@ public class Main {
 
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
 			BlockingQueue<AnnotatedWord> aws = r.getOutChannel();
-			BlockingQueue<String> inChannel= r.getInChannel();
+			BlockingQueue<String> inChannel = r.getInChannel();
 			for (String filepath : filepaths) {
 				logger.trace("Processing " + filepath);
 				if (!FilenameUtils.getExtension(filepath).equals("bz2")) {
@@ -111,9 +110,9 @@ public class Main {
 					fos.flush();
 					fos.close();
 				}
-				// closing wsd
-				inChannel.add(null);
 			}
+			// closing wsd
+			inChannel.add(null);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -152,7 +151,7 @@ public class Main {
 		public BlockingQueue<AnnotatedWord> getOutChannel() {
 			return nwd.getOutChannel();
 		}
-		
+
 		public BlockingQueue<String> getInChannel() {
 			return nwd.getInChannel();
 		}
