@@ -1,14 +1,11 @@
 package it.cnr.istc.stlab.felg;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -19,8 +16,6 @@ import getalp.wsd.method.Disambiguator;
 import getalp.wsd.method.FirstSenseDisambiguator;
 import getalp.wsd.method.neural.NeuralDisambiguator;
 import getalp.wsd.ufsac.core.Sentence;
-import getalp.wsd.ufsac.core.Word;
-import getalp.wsd.ufsac.utils.CorpusPOSTaggerAndLemmatizer;
 import getalp.wsd.utils.WordnetUtils;
 import it.cnr.istc.stlab.felg.model.AnnotatedWord;
 
@@ -35,7 +30,7 @@ public class NeuralWSDDecode {
 	private BlockingQueue<String> inSentences = new LinkedBlockingQueue<>();
 
 	public static void main(String[] args) throws Exception {
-		new NeuralWSDDecode().decode(args);
+		new NeuralWSDDecode().init(args);
 	}
 
 	public BlockingQueue<AnnotatedWord> getOutChannel() {
@@ -47,7 +42,7 @@ public class NeuralWSDDecode {
 	}
 
 	public NeuralWSDDecode(String[] args) throws Exception {
-		decode(args);
+		init(args);
 	}
 
 	public NeuralWSDDecode() throws Exception {
@@ -57,10 +52,7 @@ public class NeuralWSDDecode {
 		this.python_path = python_path;
 		this.data_path = data_path;
 		this.weights = weights;
-	}
-
-	public void decode() throws Exception {
-		decode(new String[] {});
+		init(new String[] {});
 	}
 
 	private boolean filterLemma;
@@ -73,7 +65,7 @@ public class NeuralWSDDecode {
 
 	private AtomicBoolean ready = new AtomicBoolean(false);
 
-	private void decode(String[] args) throws Exception {
+	private void init(String[] args) throws Exception {
 
 		logger.trace("Initializing Neural WSD");
 
@@ -104,7 +96,6 @@ public class NeuralWSDDecode {
 		String senseCompressionFile = parser.getArgValue("sense_compression_file");
 		boolean clearText = parser.getArgValueBoolean("clear_text");
 		int batchSize = parser.getArgValueInteger("batch_size");
-		int truncateMaxLength = parser.getArgValueInteger("truncate_max_length");
 		filterLemma = parser.getArgValueBoolean("filter_lemma");
 		mfsBackoff = parser.getArgValueBoolean("mfs_backoff");
 
@@ -117,7 +108,6 @@ public class NeuralWSDDecode {
 			senseCompressionClusters = WordnetUtils.getSenseCompressionClustersFromFile(senseCompressionFile);
 		}
 
-		CorpusPOSTaggerAndLemmatizer tagger = new CorpusPOSTaggerAndLemmatizer();
 		logger.trace("POS Tagger initialized");
 		firstSenseDisambiguator = new FirstSenseDisambiguator(WordnetHelper.wn30());
 		logger.trace("First sense disambiguator initialized");
@@ -128,60 +118,18 @@ public class NeuralWSDDecode {
 		neuralDisambiguator.filterLemma = filterLemma;
 		neuralDisambiguator.reducedOutputVocabulary = senseCompressionClusters;
 
-		List<Sentence> sentences = new ArrayList<>();
-		ready.set(true);
-		logger.trace("Ready");
-		String line;
-		while ((line = inSentences.take()) != null) {
-			if(line.equals(Main.STOP_TOKEN)) {
-				logger.info("Stopping WSD");
-				break;
-			}
-			
-			logger.trace("Disambiguating " + line);
-			Sentence sentence = new Sentence(line);
-			if (sentence.getWords().size() > truncateMaxLength) {
-				sentence.getWords().stream().skip(truncateMaxLength).collect(Collectors.toList())
-						.forEach(sentence::removeWord);
-			}
-			if (filterLemma) {
-				tagger.tag(sentence.getWords());
-			}
-			logger.trace("Tagged");
-			sentences.add(sentence);
-			if (sentences.size() >= batchSize) {
-				decodeSentenceBatch(sentences);
-				sentences.clear();
-			}
-			logger.trace("Batch decoded");
-			
-		}
-		decodeSentenceBatch(sentences);
-		neuralDisambiguator.close();
 	}
 
-	private void decodeSentenceBatch(List<Sentence> sentences) throws IOException {
-		neuralDisambiguator.disambiguateDynamicSentenceBatch(sentences, "wsd", "");
-		logger.trace("Sentence dynamically disambiguated");
-		for (Sentence sentence : sentences) {
-			if (mfsBackoff) {
-				firstSenseDisambiguator.disambiguate(sentence, "wsd");
-			}
-			logger.trace(sentence.toString() + " disambiguated!");
-			List<Word> words = sentence.getWords();
-			Iterator<Word> it = words.iterator();
-			while (it.hasNext()) {
-				Word word = it.next();
-				String wordOut = word.getValue().replace("|", "/");
-				AnnotatedWord aw = new AnnotatedWord(wordOut);
-				if (/* word.hasAnnotation("lemma") && word.hasAnnotation("pos") && */ word.hasAnnotation("wsd")) {
-					aw.setSenseKey(word.getAnnotationValue("wsd"));
-				}
-				if (!it.hasNext()) {
-					aw.setLast(true);
-				}
-				this.outWords.add(aw);
-			}
+
+	public void close() throws Exception {
+		neuralDisambiguator.close();
+
+	}
+
+	public void disambiguate(Sentence sentence) throws IOException {
+		neuralDisambiguator.disambiguate(sentence, "wsd", "");
+		if (mfsBackoff) {
+			firstSenseDisambiguator.disambiguate(sentence, "wsd");
 		}
 	}
 

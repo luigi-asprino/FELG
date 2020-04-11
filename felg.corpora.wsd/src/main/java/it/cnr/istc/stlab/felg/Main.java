@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.BlockingQueue;
 
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.configuration2.Configuration;
@@ -15,11 +14,16 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import it.cnr.istc.stlab.felg.model.AnnotatedWord;
+import getalp.wsd.ufsac.core.Sentence;
+import getalp.wsd.ufsac.core.Word;
+import getalp.wsd.ufsac.utils.CorpusLemmatizer;
 import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
 public class Main {
@@ -44,8 +48,10 @@ public class Main {
 			logger.debug("Absolute path " + (new File(config.getString("wikiFolder"))).getAbsolutePath());
 
 			Properties props = new Properties();
-			props.setProperty("annotators", "tokenize, ssplit");
+			props.setProperty("annotators", "tokenize, ssplit, pos");
 			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+
+			CorpusLemmatizer lemmatizer = new CorpusLemmatizer();
 
 			String outputFolder = config.getString("outputFolder");
 			String python_path = config.getString("python_path");
@@ -54,19 +60,11 @@ public class Main {
 			weights.add(config.getString("weights"));
 
 			// initialize WSD
-			WSDRunnable r = new WSDRunnable(python_path, data_path, weights);
-			new Thread(r).start();
-
-			// wait until the wsd is initialized
-			while (!r.isReady()) {
-				Thread.sleep(1000);
-			}
+			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
 
 			logger.info("WSD initialized");
 
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
-			BlockingQueue<AnnotatedWord> aws = r.getOutChannel();
-			BlockingQueue<String> inChannel = r.getInChannel();
 			for (String filepath : filepaths) {
 				logger.trace("Processing " + filepath);
 				if (!FilenameUtils.getExtension(filepath).equals("bz2")) {
@@ -83,28 +81,36 @@ public class Main {
 
 					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
 						String textSentence = sentence.get(TextAnnotation.class);
+
+						Sentence wsdSentence = new Sentence(textSentence);
+
+						List<CoreLabel> t = sentence.get(TokensAnnotation.class);
+						CoreLabel[] tokens = t.toArray(new CoreLabel[t.size()]);
+
+						for (int i = 0; i < tokens.length; i++) {
+							Word word = new Word(tokens[i].word());
+							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
+						}
+
+						lemmatizer.tag(wsdSentence.getWords());
+
 						try {
-							inChannel.add(textSentence + "\n");
-							AnnotatedWord aw;
-							boolean stop = false;
-
+							nwd.disambiguate(wsdSentence);
 							StringBuilder sb = new StringBuilder();
-
-							while (!stop) {
-								aw = aws.take();
-								sb.append(aw.getWord());
-								if (aw.getSenseKey() != null) {
+							wsdSentence.getWords().forEach(w -> {
+								sb.append(w.getValue());
+								if (w.hasAnnotation("wsd")) {
 									sb.append('|');
-									sb.append(aw.getSenseKey());
+									sb.append(w.getAnnotationValue("wsd"));
 								}
-								sb.append(' ');
-								stop = aw.isLast();
-							}
+							});
 							sb.append('\n');
 							fos.write(sb.toString().getBytes());
-						} catch (IOException | InterruptedException e) {
+							fos.flush();
+						} catch (IOException e) {
 							e.printStackTrace();
 						}
+
 					});
 
 					logger.trace("Ending " + aar.getTitle());
@@ -113,48 +119,11 @@ public class Main {
 				}
 			}
 			// closing wsd
-			inChannel.add(null);
-
+			nwd.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
 
-	static class WSDRunnable implements Runnable {
-
-		private NeuralWSDDecode nwd;
-		private String python_path;
-		private String data_path;
-		private List<String> weights;
-
-		public WSDRunnable(String python_path, String data_path, List<String> weights) {
-			super();
-			this.python_path = python_path;
-			this.data_path = data_path;
-			this.weights = weights;
-		}
-
-		@Override
-		public void run() {
-			try {
-				this.nwd = new NeuralWSDDecode(python_path, data_path, weights);
-				this.nwd.decode();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		public boolean isReady() {
-			return nwd != null && nwd.isReady();
-		}
-
-		public BlockingQueue<AnnotatedWord> getOutChannel() {
-			return nwd.getOutChannel();
-		}
-
-		public BlockingQueue<String> getInChannel() {
-			return nwd.getInChannel();
-		}
-	}
 }
