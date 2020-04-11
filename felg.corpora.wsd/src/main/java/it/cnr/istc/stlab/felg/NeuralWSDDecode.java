@@ -129,6 +129,7 @@ public class NeuralWSDDecode {
 		ready.set(true);
 		logger.trace("Ready");
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+			logger.trace("Disambiguating "+line);
 			Sentence sentence = new Sentence(line);
 			if (sentence.getWords().size() > truncateMaxLength) {
 				sentence.getWords().stream().skip(truncateMaxLength).collect(Collectors.toList())
