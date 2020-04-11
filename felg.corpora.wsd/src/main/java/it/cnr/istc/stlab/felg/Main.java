@@ -94,7 +94,11 @@ public class Main {
 
 					while (!stop) {
 						aw = aws.take();
-						fos.write((aw.getWord() + "|" + aw.getSenseKey()).getBytes());
+						if(aw.getSenseKey()!=null) {
+							fos.write((aw.getWord() + "|" + aw.getSenseKey()+" ").getBytes());
+						}else {
+							fos.write((aw.getWord() + " ").getBytes());
+						}
 						stop = aw.isLast();
 					}
 					logger.trace("Ending "+aar.getTitle());
