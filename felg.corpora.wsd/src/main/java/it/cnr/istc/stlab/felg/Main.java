@@ -24,6 +24,7 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import getalp.wsd.ufsac.core.Sentence;
 import getalp.wsd.ufsac.core.Word;
 import getalp.wsd.ufsac.utils.CorpusLemmatizer;
+import getalp.wsd.ufsac.utils.CorpusPOSTagger;
 import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
 public class Main {
@@ -52,6 +53,8 @@ public class Main {
 			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
 			CorpusLemmatizer lemmatizer = new CorpusLemmatizer();
+			CorpusPOSTagger posTagger= new CorpusPOSTagger(false);
+
 
 			String outputFolder = config.getString("outputFolder");
 			String python_path = config.getString("python_path");
@@ -90,6 +93,7 @@ public class Main {
 						for (int i = 0; i < tokens.length; i++) {
 							Word word = new Word(tokens[i].word());
 							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
+							wsdSentence.addWord(word);
 						}
 
 						lemmatizer.tag(wsdSentence.getWords());
