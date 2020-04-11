@@ -103,6 +103,7 @@ public class Main {
 									sb.append('|');
 									sb.append(w.getAnnotationValue("wsd"));
 								}
+								sb.append(' ');
 							});
 							sb.append('\n');
 							fos.write(sb.toString().getBytes());

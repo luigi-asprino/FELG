@@ -3,10 +3,8 @@ package it.cnr.istc.stlab.felg;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -17,7 +15,6 @@ import getalp.wsd.method.FirstSenseDisambiguator;
 import getalp.wsd.method.neural.NeuralDisambiguator;
 import getalp.wsd.ufsac.core.Sentence;
 import getalp.wsd.utils.WordnetUtils;
-import it.cnr.istc.stlab.felg.model.AnnotatedWord;
 
 // NeuralWSDDecode adapted from https://github.com/getalp/disambiguate
 
@@ -26,23 +23,13 @@ public class NeuralWSDDecode {
 	private static final Logger logger = LogManager.getLogger(NeuralWSDDecode.class);
 	private String python_path, data_path;
 	private List<String> weights;
-	private BlockingQueue<AnnotatedWord> outWords = new LinkedBlockingQueue<AnnotatedWord>();
-	private BlockingQueue<String> inSentences = new LinkedBlockingQueue<>();
+	private boolean filterLemma;
+	private boolean mfsBackoff;
+	private Disambiguator firstSenseDisambiguator;
+	private NeuralDisambiguator neuralDisambiguator;
 
 	public static void main(String[] args) throws Exception {
 		new NeuralWSDDecode().init(args);
-	}
-
-	public BlockingQueue<AnnotatedWord> getOutChannel() {
-		return outWords;
-	}
-
-	public BlockingQueue<String> getInChannel() {
-		return inSentences;
-	}
-
-	public NeuralWSDDecode(String[] args) throws Exception {
-		init(args);
 	}
 
 	public NeuralWSDDecode() throws Exception {
@@ -54,16 +41,6 @@ public class NeuralWSDDecode {
 		this.weights = weights;
 		init(new String[] {});
 	}
-
-	private boolean filterLemma;
-
-	private boolean mfsBackoff;
-
-	private Disambiguator firstSenseDisambiguator;
-
-	private NeuralDisambiguator neuralDisambiguator;
-
-	private AtomicBoolean ready = new AtomicBoolean(false);
 
 	private void init(String[] args) throws Exception {
 
@@ -120,14 +97,12 @@ public class NeuralWSDDecode {
 
 	}
 
-
 	public void close() throws Exception {
 		neuralDisambiguator.close();
-
 	}
 
 	public void disambiguate(Sentence sentence) throws IOException {
-		neuralDisambiguator.disambiguate(sentence, "wsd", "");
+		neuralDisambiguator.disambiguateDynamicSentenceBatch(Lists.newArrayList(sentence), "wsd", "");
 		if (mfsBackoff) {
 			firstSenseDisambiguator.disambiguate(sentence, "wsd");
 		}
@@ -143,10 +118,6 @@ public class NeuralWSDDecode {
 
 	public void setWeights(List<String> weights) {
 		this.weights = weights;
-	}
-
-	public boolean isReady() {
-		return ready.get();
 	}
 
 }
