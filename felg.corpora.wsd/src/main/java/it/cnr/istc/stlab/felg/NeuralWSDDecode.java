@@ -16,9 +16,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 // NeuralWSDDecode adapted from https://github.com/getalp/disambiguate
 
 public class NeuralWSDDecode {
+	
+	private static final Logger logger = LogManager.getLogger(NeuralWSDDecode.class);
 	private String python_path, data_path;
 	private List<String> weights;
 
@@ -58,6 +63,9 @@ public class NeuralWSDDecode {
 	private boolean ready=false;
 
 	private void decode(String[] args) throws Exception {
+		
+		logger.trace("Initializing Neural WSD");
+		
 		ArgumentParser parser = new ArgumentParser();
 		parser.addArgument("python_path", python_path);
 		parser.addArgument("data_path", data_path);
@@ -99,8 +107,12 @@ public class NeuralWSDDecode {
 		}
 
 		CorpusPOSTaggerAndLemmatizer tagger = new CorpusPOSTaggerAndLemmatizer();
+		logger.trace("POS Tagger initialized");
 		firstSenseDisambiguator = new FirstSenseDisambiguator(WordnetHelper.wn30());
+		logger.trace("First sense disambiguator initialized");
 		neuralDisambiguator = new NeuralDisambiguator(pythonPath, dataPath, weights, clearText, batchSize);
+		logger.trace("Neural disambiguator initialized");
+		
 		neuralDisambiguator.lowercaseWords = lowercase;
 		neuralDisambiguator.filterLemma = filterLemma;
 		neuralDisambiguator.reducedOutputVocabulary = senseCompressionClusters;
@@ -111,6 +123,7 @@ public class NeuralWSDDecode {
 			writer = new BufferedWriter(new OutputStreamWriter(System.out));
 		List<Sentence> sentences = new ArrayList<>();
 		ready = true;
+		logger.trace("Ready");
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
 			Sentence sentence = new Sentence(line);
 			if (sentence.getWords().size() > truncateMaxLength) {
