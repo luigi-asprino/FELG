@@ -135,14 +135,17 @@ public class NeuralWSDDecode {
 				sentence.getWords().stream().skip(truncateMaxLength).collect(Collectors.toList())
 						.forEach(sentence::removeWord);
 			}
+			logger.trace("Sentence truncated");
 			if (filterLemma) {
 				tagger.tag(sentence.getWords());
 			}
+			logger.trace("Tagged");
 			sentences.add(sentence);
 			if (sentences.size() >= batchSize) {
 				decodeSentenceBatch(sentences);
 				sentences.clear();
 			}
+			logger.trace("Batch decoded");
 		}
 		decodeSentenceBatch(sentences);
 		writer.close();
