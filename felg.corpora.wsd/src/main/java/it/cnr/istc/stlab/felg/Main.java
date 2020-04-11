@@ -88,8 +88,8 @@ public class Main {
 						for (int i = 0; i < tokens.length; i++) {
 							Word word = new Word(tokens[i].word());
 							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
-							inputSentence.append((tokens[i].word()));
-							inputSentence.append(" ");
+							inputSentence.append(
+									(tokens[i].word()) + "_" + tokens[i].get(PartOfSpeechAnnotation.class) + " ");
 						}
 						logger.trace("Disambiguating " + inputSentence.toString());
 
