@@ -68,7 +68,6 @@ public class Main {
 					new BufferedReader(new InputStreamReader(wsdInputStream)));
 			new Thread(r).start();
 
-			BlockingQueue<AnnotatedWord> aws = r.getOutChannel();
 
 			// wait until the wsd is initialized
 			while (!r.isReady()) {
@@ -78,6 +77,7 @@ public class Main {
 			logger.info("WSD initialized");
 
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
+			BlockingQueue<AnnotatedWord> aws = r.getOutChannel();
 			for (String filepath : filepaths) {
 				logger.trace("Processing " + filepath);
 				if (!FilenameUtils.getExtension(filepath).equals("bz2")) {
