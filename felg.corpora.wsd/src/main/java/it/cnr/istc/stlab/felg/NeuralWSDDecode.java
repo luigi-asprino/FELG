@@ -155,20 +155,24 @@ public class NeuralWSDDecode {
 
 	private void decodeSentenceBatch(List<Sentence> sentences) throws IOException {
 		neuralDisambiguator.disambiguateDynamicSentenceBatch(sentences, "wsd", "");
-		logger.info("Sentence dynamically disambiguated");
+		logger.trace("Sentence dynamically disambiguated");
 		for (Sentence sentence : sentences) {
 			if (mfsBackoff) {
 				firstSenseDisambiguator.disambiguate(sentence, "wsd");
 			}
-			logger.info(sentence.toString()+" disambiguated!");
+			logger.trace(sentence.toString()+" disambiguated!");
 			for (Word word : sentence.getWords()) {
 				writer.write(word.getValue().replace("|", "/"));
+				System.out.print(word.getValue().replace("|", "/"));
 				if (/* word.hasAnnotation("lemma") && word.hasAnnotation("pos") && */ word.hasAnnotation("wsd")) {
 					writer.write("|" + word.getAnnotationValue("wsd"));
+					System.out.print("|" + word.getAnnotationValue("wsd"));
 				}
 				writer.write(" ");
+				System.out.print(" ");
 			}
 			writer.newLine();
+			System.out.println();
 		}
 		writer.flush();
 	}
