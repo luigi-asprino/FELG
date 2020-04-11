@@ -55,7 +55,7 @@ public class NeuralWSDDecode {
 
 	private BufferedReader reader;
 
-	private boolean ready;
+	private boolean ready=false;
 
 	private void decode(String[] args) throws Exception {
 		ArgumentParser parser = new ArgumentParser();
