@@ -84,11 +84,14 @@ public class Main {
 						List<CoreLabel> t = sentence.get(TokensAnnotation.class);
 						CoreLabel[] tokens = t.toArray(new CoreLabel[t.size()]);
 						List<Word> words = new ArrayList<>();
-
+						StringBuilder inputSentence = new StringBuilder();
 						for (int i = 0; i < tokens.length; i++) {
 							Word word = new Word(tokens[i].word());
 							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
+							inputSentence.append((tokens[i].word()));
+							inputSentence.append(" ");
 						}
+						logger.trace("Disambiguating " + inputSentence.toString());
 
 						Sentence wsdSentence = new Sentence(words);
 						lemmatizer.tag(wsdSentence.getWords());
