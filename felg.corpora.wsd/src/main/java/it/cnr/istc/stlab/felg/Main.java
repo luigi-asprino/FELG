@@ -68,7 +68,6 @@ public class Main {
 					new BufferedReader(new InputStreamReader(wsdInputStream)));
 			new Thread(r).start();
 
-
 			// wait until the wsd is initialized
 			while (!r.isReady()) {
 				Thread.sleep(1000);
@@ -95,7 +94,7 @@ public class Main {
 
 					while (!stop) {
 						aw = aws.take();
-						fos.write((aw.getWord()+"|"+aw.getSenseKey()).getBytes());
+						fos.write((aw.getWord() + "|" + aw.getSenseKey()).getBytes());
 						stop = aw.isLast();
 					}
 

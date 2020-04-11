@@ -62,7 +62,7 @@ public class ArticleReader {
 			sb.append(rawText.substring(lastEnd));
 			clean = sb.toString();
 		}
-		return clean;
+		return clean.replaceAll("\\n", " ");
 	}
 
 }
