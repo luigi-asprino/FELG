@@ -83,7 +83,7 @@ public class Main {
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
 					logger.trace("Processing " + aar.getTitle());
-					textOutputStream.write(aar.getAbstract().getBytes());
+					textOutputStream.write(aar.getAbstract(true).getBytes());
 					String line;
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
 					while ((line = br.readLine()) != null) {
