@@ -1,5 +1,23 @@
 package it.cnr.istc.stlab.felg;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import getalp.wsd.common.utils.ArgumentParser;
 import getalp.wsd.common.wordnet.WordnetHelper;
 import getalp.wsd.method.Disambiguator;
 import getalp.wsd.method.FirstSenseDisambiguator;
@@ -7,29 +25,24 @@ import getalp.wsd.method.neural.NeuralDisambiguator;
 import getalp.wsd.ufsac.core.Sentence;
 import getalp.wsd.ufsac.core.Word;
 import getalp.wsd.ufsac.utils.CorpusPOSTaggerAndLemmatizer;
-import getalp.wsd.common.utils.ArgumentParser;
 import getalp.wsd.utils.WordnetUtils;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import it.cnr.istc.stlab.felg.model.AnnotatedWord;
 
 // NeuralWSDDecode adapted from https://github.com/getalp/disambiguate
 
 public class NeuralWSDDecode {
-	
+
 	private static final Logger logger = LogManager.getLogger(NeuralWSDDecode.class);
 	private String python_path, data_path;
 	private List<String> weights;
+	private BlockingQueue<AnnotatedWord> outWords = new LinkedBlockingQueue<AnnotatedWord>();
 
 	public static void main(String[] args) throws Exception {
 		new NeuralWSDDecode().decode(args);
+	}
+
+	public BlockingQueue<AnnotatedWord> getOutChannel() {
+		return outWords;
 	}
 
 	public NeuralWSDDecode(String[] args) throws Exception {
@@ -47,7 +60,7 @@ public class NeuralWSDDecode {
 		this.writer = writer;
 		this.reader = reader;
 	}
-	
+
 	public void decode() throws Exception {
 		decode(new String[] {});
 	}
@@ -64,12 +77,12 @@ public class NeuralWSDDecode {
 
 	private BufferedReader reader;
 
-	private AtomicBoolean ready=new AtomicBoolean(false);
+	private AtomicBoolean ready = new AtomicBoolean(false);
 
 	private void decode(String[] args) throws Exception {
-		
+
 		logger.trace("Initializing Neural WSD");
-		
+
 		ArgumentParser parser = new ArgumentParser();
 		parser.addArgument("python_path", python_path);
 		parser.addArgument("data_path", data_path);
@@ -116,7 +129,7 @@ public class NeuralWSDDecode {
 		logger.trace("First sense disambiguator initialized");
 		neuralDisambiguator = new NeuralDisambiguator(pythonPath, dataPath, weights, clearText, batchSize);
 		logger.trace("Neural disambiguator initialized");
-		
+
 		neuralDisambiguator.lowercaseWords = lowercase;
 		neuralDisambiguator.filterLemma = filterLemma;
 		neuralDisambiguator.reducedOutputVocabulary = senseCompressionClusters;
@@ -129,7 +142,7 @@ public class NeuralWSDDecode {
 		ready.set(true);
 		logger.trace("Ready");
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-			logger.trace("Disambiguating "+line);
+			logger.trace("Disambiguating " + line);
 			Sentence sentence = new Sentence(line);
 			if (sentence.getWords().size() > truncateMaxLength) {
 				sentence.getWords().stream().skip(truncateMaxLength).collect(Collectors.toList())
@@ -160,23 +173,33 @@ public class NeuralWSDDecode {
 			if (mfsBackoff) {
 				firstSenseDisambiguator.disambiguate(sentence, "wsd");
 			}
-			logger.trace(sentence.toString()+" disambiguated!");
-			for (Word word : sentence.getWords()) {
-				writer.write(word.getValue().replace("|", "/"));
-				System.out.print(word.getValue().replace("|", "/"));
+			logger.trace(sentence.toString() + " disambiguated!");
+			List<Word> words = sentence.getWords();
+			Iterator<Word> it = words.iterator();
+			while (it.hasNext()) {
+				Word word =it.next();
+//				writer.write(word.getValue().replace("|", "/"));
+				String wordOut = word.getValue().replace("|", "/");
+				AnnotatedWord aw = new AnnotatedWord(wordOut);
+//				System.out.print(word.getValue().replace("|", "/"));
 				if (/* word.hasAnnotation("lemma") && word.hasAnnotation("pos") && */ word.hasAnnotation("wsd")) {
-					writer.write("|" + word.getAnnotationValue("wsd"));
-					System.out.print("|" + word.getAnnotationValue("wsd"));
+//					writer.write("|" + word.getAnnotationValue("wsd"));
+//					System.out.print("|" + word.getAnnotationValue("wsd"));
+					aw.setSenseKey(word.getAnnotationValue("wsd"));
 				}
-				writer.write(" ");
-				System.out.print(" ");
+//				writer.write(" ");
+//				System.out.print(" ");
+				if(!it.hasNext()) {
+					aw.setLast(true);
+				}
+				this.outWords.add(aw);
 			}
-			writer.newLine();
-			System.out.println();
+//			writer.newLine();
+//			System.out.println();
 		}
-		System.out.println("before flushing");
-		writer.flush();
-		System.out.println("end decode batch");
+//		System.out.println("before flushing");
+//		writer.flush();
+//		System.out.println("end decode batch");
 	}
 
 	public void setPython_path(String python_path) {

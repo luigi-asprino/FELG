@@ -12,6 +12,7 @@ import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.configuration2.Configuration;
@@ -20,6 +21,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import it.cnr.istc.stlab.felg.model.AnnotatedWord;
 import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
 public class Main {
@@ -58,13 +60,15 @@ public class Main {
 //			System.setIn(wsdInputStream);
 //			System.setOut(wsdOutputStream);
 
-			BufferedReader br = new BufferedReader(new InputStreamReader(annotatedTextInputStream));
+//			BufferedReader br = new BufferedReader(new InputStreamReader(annotatedTextInputStream));
 
 			// initialize WSD
 			WSDRunnable r = new WSDRunnable(python_path, data_path, weights,
 					new BufferedWriter(new OutputStreamWriter(wsdOutputStream)),
 					new BufferedReader(new InputStreamReader(wsdInputStream)));
 			new Thread(r).start();
+
+			BlockingQueue<AnnotatedWord> aws = r.getOutChannel();
 
 			// wait until the wsd is initialized
 			while (!r.isReady()) {
@@ -84,11 +88,17 @@ public class Main {
 				while ((aar = ar.nextArticle()) != null) {
 					logger.trace("Processing " + aar.getTitle());
 					textOutputStream.write(aar.getAbstract(true).getBytes());
-					String line;
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
-					while ((line = br.readLine()) != null) {
-						fos.write(line.getBytes());
+
+					AnnotatedWord aw;
+					boolean stop = false;
+
+					while (!stop) {
+						aw = aws.take();
+						fos.write((aw.getWord()+"|"+aw.getSenseKey()).getBytes());
+						stop = aw.isLast();
 					}
+
 					fos.close();
 				}
 			}
@@ -129,7 +139,11 @@ public class Main {
 		}
 
 		public boolean isReady() {
-			return nwd!=null && nwd.isReady();
+			return nwd != null && nwd.isReady();
+		}
+
+		public BlockingQueue<AnnotatedWord> getOutChannel() {
+			return nwd.getOutChannel();
 		}
 	}
 }
