@@ -69,12 +69,14 @@ public class Main {
 			// wait until the wsd is initialized
 			while (!r.isReady()) {
 				Thread.sleep(1000);
+				logger.trace("Not ready");
 			}
 
 			logger.info("WSD initialized");
 
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
 			for (String filepath : filepaths) {
+				logger.trace("Processing " + filepath);
 				if (!FilenameUtils.getExtension(filepath).equals("bz2")) {
 					continue;
 				}
