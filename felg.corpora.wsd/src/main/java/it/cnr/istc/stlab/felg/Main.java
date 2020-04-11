@@ -12,6 +12,7 @@ import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 
 import org.apache.commons.compress.compressors.CompressorException;
@@ -21,6 +22,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import it.cnr.istc.stlab.felg.model.AnnotatedWord;
 import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
@@ -43,6 +48,10 @@ public class Main {
 			logger.info("Reading folder " + config.getString("wikiFolder"));
 			logger.info("Output Folder folder " + config.getString("outputFolder"));
 			logger.debug("Absolute path " + (new File(config.getString("wikiFolder"))).getAbsolutePath());
+
+			Properties props = new Properties();
+			props.setProperty("annotators", "ssplit");
+			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
 			String outputFolder = config.getString("outputFolder");
 			String python_path = config.getString("python_path");
@@ -86,28 +95,40 @@ public class Main {
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
 					logger.trace("Processing " + aar.getTitle());
-					textOutputStream.write((aar.getAbstract(true)+"\n").getBytes());
+
+					Annotation annotation = new Annotation(aar.getAbstract(true));
+					pipeline.annotate(annotation);
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
 
-					AnnotatedWord aw;
-					boolean stop = false;
-					
-					StringBuilder sb = new StringBuilder();
+					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
+						String textSentence = sentence.get(TextAnnotation.class);
+						try {
+							textOutputStream.write((textSentence + "\n").getBytes());
+							AnnotatedWord aw;
+							boolean stop = false;
 
-					while (!stop) {
-						aw = aws.take();
-						sb.append(aw.getWord());
-						if(aw.getSenseKey()!=null) {
-							sb.append('|');
-							sb.append(aw.getSenseKey());
+							StringBuilder sb = new StringBuilder();
+
+							while (!stop) {
+								aw = aws.take();
+								sb.append(aw.getWord());
+								if (aw.getSenseKey() != null) {
+									sb.append('|');
+									sb.append(aw.getSenseKey());
+								}
+								sb.append(' ');
+								stop = aw.isLast();
+							}
+							sb.append('\n');
+							fos.write(sb.toString().getBytes());
+						} catch (IOException | InterruptedException e) {
+							e.printStackTrace();
 						}
-						sb.append(' ');
-						stop = aw.isLast();
-					}
-					fos.write(sb.toString().getBytes());
-					logger.trace("Ending "+aar.getTitle());
+					});
+
+					logger.trace("Ending " + aar.getTitle());
 					fos.flush();
-					fos.close();	
+					fos.close();
 				}
 			}
 
