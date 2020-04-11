@@ -16,7 +16,6 @@ import org.apache.log4j.Logger;
 
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -53,8 +52,7 @@ public class Main {
 			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
 			CorpusLemmatizer lemmatizer = new CorpusLemmatizer();
-			CorpusPOSTagger posTagger= new CorpusPOSTagger(false);
-
+			CorpusPOSTagger posTagger = new CorpusPOSTagger(false);
 
 			String outputFolder = config.getString("outputFolder");
 			String python_path = config.getString("python_path");
@@ -83,19 +81,16 @@ public class Main {
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
 
 					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
-						String textSentence = sentence.get(TextAnnotation.class);
-
-						Sentence wsdSentence = new Sentence(textSentence);
-
 						List<CoreLabel> t = sentence.get(TokensAnnotation.class);
 						CoreLabel[] tokens = t.toArray(new CoreLabel[t.size()]);
+						List<Word> words = new ArrayList<>();
 
 						for (int i = 0; i < tokens.length; i++) {
 							Word word = new Word(tokens[i].word());
 							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
-							wsdSentence.addWord(word);
 						}
 
+						Sentence wsdSentence = new Sentence(words);
 						lemmatizer.tag(wsdSentence.getWords());
 
 						try {
