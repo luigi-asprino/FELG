@@ -50,7 +50,7 @@ public class Main {
 			logger.debug("Absolute path " + (new File(config.getString("wikiFolder"))).getAbsolutePath());
 
 			Properties props = new Properties();
-			props.setProperty("annotators", "ssplit");
+			props.setProperty("annotators", "tokenize, ssplit");
 			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
 			String outputFolder = config.getString("outputFolder");
