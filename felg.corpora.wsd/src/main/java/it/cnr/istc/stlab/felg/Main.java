@@ -16,7 +16,6 @@ import org.apache.log4j.Logger;
 
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -24,13 +23,11 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import getalp.wsd.ufsac.core.Sentence;
 import getalp.wsd.ufsac.core.Word;
 import getalp.wsd.ufsac.utils.CorpusLemmatizer;
-import getalp.wsd.ufsac.utils.CorpusPOSTagger;
 import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
 public class Main {
 
 	private static final Logger logger = LogManager.getLogger(Main.class);
-	public static final String STOP_TOKEN = "######STOP######";
 
 	public static void main(String[] args) throws CompressorException, IOException {
 		logger.info("Running FELG");
@@ -53,7 +50,7 @@ public class Main {
 			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
 			CorpusLemmatizer lemmatizer = new CorpusLemmatizer();
-			CorpusPOSTagger posTagger = new CorpusPOSTagger(false);
+//			CorpusPOSTagger posTagger = new CorpusPOSTagger(false);
 
 			String outputFolder = config.getString("outputFolder");
 			String python_path = config.getString("python_path");
@@ -80,6 +77,7 @@ public class Main {
 					Annotation annotation = new Annotation(aar.getAbstract(true));
 					pipeline.annotate(annotation);
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
+					List<Sentence> sentenceBatch = new ArrayList<>();
 
 					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
 						List<CoreLabel> t = sentence.get(TokensAnnotation.class);
@@ -93,18 +91,34 @@ public class Main {
 									(tokens[i].word()) + "_" + tokens[i].get(PartOfSpeechAnnotation.class) + " ");
 							words.add(word);
 						}
-//						logger.trace("Disambiguating " + inputSentence.toString());
-
-//						String textSentence = sentence.get(TextAnnotation.class);
-
-//						Sentence wsdSentence = new Sentence(textSentence);
-//						posTagger.tag(wsdSentence.getWords());
-						
 						Sentence wsdSentence = new Sentence(words);
 						lemmatizer.tag(wsdSentence.getWords());
+						sentenceBatch.add(wsdSentence);
 
+//						try {
+//							nwd.disambiguate(wsdSentence);
+//							StringBuilder sb = new StringBuilder();
+//							wsdSentence.getWords().forEach(w -> {
+//								sb.append(w.getValue());
+//								if (w.hasAnnotation("wsd")) {
+//									sb.append('|');
+//									sb.append(w.getAnnotationValue("wsd"));
+//								}
+//								sb.append(' ');
+//							});
+//							sb.append('\n');
+//							fos.write(sb.toString().getBytes());
+//							fos.flush();
+//						} catch (IOException e) {
+//							e.printStackTrace();
+//						}
+
+					});
+
+					nwd.disambiguateBatch(sentenceBatch);
+					
+					sentenceBatch.forEach(wsdSentence -> {
 						try {
-							nwd.disambiguate(wsdSentence);
 							StringBuilder sb = new StringBuilder();
 							wsdSentence.getWords().forEach(w -> {
 								sb.append(w.getValue());
@@ -120,7 +134,6 @@ public class Main {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-
 					});
 
 					logger.trace("Ending " + aar.getTitle());

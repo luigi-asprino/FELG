@@ -107,6 +107,10 @@ public class NeuralWSDDecode {
 		}
 	}
 
+	public void disambiguateBatch(List<Sentence> sentences) throws IOException {
+		neuralDisambiguator.disambiguateDynamicSentenceBatch(sentences, "wsd", "");
+	}
+
 	public void setPython_path(String python_path) {
 		this.python_path = python_path;
 	}
