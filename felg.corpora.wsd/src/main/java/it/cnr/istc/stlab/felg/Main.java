@@ -123,6 +123,7 @@ public class Main {
 		public void run() {
 			try {
 				this.nwd = new NeuralWSDDecode(python_path, data_path, weights, writer, reader);
+				this.nwd.decode();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

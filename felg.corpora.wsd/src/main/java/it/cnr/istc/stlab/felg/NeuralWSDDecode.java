@@ -14,6 +14,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.LogManager;
@@ -45,6 +46,9 @@ public class NeuralWSDDecode {
 		this.weights = weights;
 		this.writer = writer;
 		this.reader = reader;
+	}
+	
+	public void decode() throws Exception {
 		decode(new String[] {});
 	}
 
@@ -60,7 +64,7 @@ public class NeuralWSDDecode {
 
 	private BufferedReader reader;
 
-	private boolean ready=false;
+	private AtomicBoolean ready=new AtomicBoolean(false);
 
 	private void decode(String[] args) throws Exception {
 		
@@ -122,7 +126,7 @@ public class NeuralWSDDecode {
 		if (writer == null)
 			writer = new BufferedWriter(new OutputStreamWriter(System.out));
 		List<Sentence> sentences = new ArrayList<>();
-		ready = true;
+		ready.set(true);
 		logger.trace("Ready");
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
 			Sentence sentence = new Sentence(line);
@@ -176,6 +180,6 @@ public class NeuralWSDDecode {
 	}
 
 	public boolean isReady() {
-		return ready;
+		return ready.get();
 	}
 }
