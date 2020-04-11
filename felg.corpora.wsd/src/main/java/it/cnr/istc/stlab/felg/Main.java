@@ -91,16 +91,20 @@ public class Main {
 
 					AnnotatedWord aw;
 					boolean stop = false;
+					
+					StringBuilder sb = new StringBuilder();
 
 					while (!stop) {
 						aw = aws.take();
+						sb.append(aw.getWord());
 						if(aw.getSenseKey()!=null) {
-							fos.write((aw.getWord() + "|" + aw.getSenseKey()+" ").getBytes());
-						}else {
-							fos.write((aw.getWord() + " ").getBytes());
+							sb.append('|');
+							sb.append(aw.getSenseKey());
 						}
+						sb.append(' ');
 						stop = aw.isLast();
 					}
+					fos.write(sb.toString().getBytes());
 					logger.trace("Ending "+aar.getTitle());
 					fos.flush();
 					fos.close();	
