@@ -1,10 +1,6 @@
 package it.cnr.istc.stlab.felg;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +32,7 @@ public class NeuralWSDDecode {
 	private String python_path, data_path;
 	private List<String> weights;
 	private BlockingQueue<AnnotatedWord> outWords = new LinkedBlockingQueue<AnnotatedWord>();
+	private BlockingQueue<String> inSentences = new LinkedBlockingQueue<>();
 
 	public static void main(String[] args) throws Exception {
 		new NeuralWSDDecode().decode(args);
@@ -43,6 +40,10 @@ public class NeuralWSDDecode {
 
 	public BlockingQueue<AnnotatedWord> getOutChannel() {
 		return outWords;
+	}
+	
+	public BlockingQueue<String> getInChannel() {
+		return inSentences;
 	}
 
 	public NeuralWSDDecode(String[] args) throws Exception {
@@ -52,13 +53,11 @@ public class NeuralWSDDecode {
 	public NeuralWSDDecode() throws Exception {
 	}
 
-	public NeuralWSDDecode(String python_path, String data_path, List<String> weights, BufferedWriter writer,
-			BufferedReader reader) throws Exception {
+	public NeuralWSDDecode(String python_path, String data_path, List<String> weights)
+			throws Exception {
 		this.python_path = python_path;
 		this.data_path = data_path;
 		this.weights = weights;
-		this.writer = writer;
-		this.reader = reader;
 	}
 
 	public void decode() throws Exception {
@@ -72,10 +71,6 @@ public class NeuralWSDDecode {
 	private Disambiguator firstSenseDisambiguator;
 
 	private NeuralDisambiguator neuralDisambiguator;
-
-	private BufferedWriter writer;
-
-	private BufferedReader reader;
 
 	private AtomicBoolean ready = new AtomicBoolean(false);
 
@@ -134,21 +129,17 @@ public class NeuralWSDDecode {
 		neuralDisambiguator.filterLemma = filterLemma;
 		neuralDisambiguator.reducedOutputVocabulary = senseCompressionClusters;
 
-		if (reader == null)
-			reader = new BufferedReader(new InputStreamReader(System.in));
-		if (writer == null)
-			writer = new BufferedWriter(new OutputStreamWriter(System.out));
 		List<Sentence> sentences = new ArrayList<>();
 		ready.set(true);
 		logger.trace("Ready");
-		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+		String line;
+		while((line = inSentences.take())!=null) {
 			logger.trace("Disambiguating " + line);
 			Sentence sentence = new Sentence(line);
 			if (sentence.getWords().size() > truncateMaxLength) {
 				sentence.getWords().stream().skip(truncateMaxLength).collect(Collectors.toList())
 						.forEach(sentence::removeWord);
 			}
-			logger.trace("Sentence truncated");
 			if (filterLemma) {
 				tagger.tag(sentence.getWords());
 			}
@@ -161,8 +152,6 @@ public class NeuralWSDDecode {
 			logger.trace("Batch decoded");
 		}
 		decodeSentenceBatch(sentences);
-		writer.close();
-		reader.close();
 		neuralDisambiguator.close();
 	}
 
@@ -177,29 +166,18 @@ public class NeuralWSDDecode {
 			List<Word> words = sentence.getWords();
 			Iterator<Word> it = words.iterator();
 			while (it.hasNext()) {
-				Word word =it.next();
-//				writer.write(word.getValue().replace("|", "/"));
+				Word word = it.next();
 				String wordOut = word.getValue().replace("|", "/");
 				AnnotatedWord aw = new AnnotatedWord(wordOut);
-//				System.out.print(word.getValue().replace("|", "/"));
 				if (/* word.hasAnnotation("lemma") && word.hasAnnotation("pos") && */ word.hasAnnotation("wsd")) {
-//					writer.write("|" + word.getAnnotationValue("wsd"));
-//					System.out.print("|" + word.getAnnotationValue("wsd"));
 					aw.setSenseKey(word.getAnnotationValue("wsd"));
 				}
-//				writer.write(" ");
-//				System.out.print(" ");
-				if(!it.hasNext()) {
+				if (!it.hasNext()) {
 					aw.setLast(true);
 				}
 				this.outWords.add(aw);
 			}
-//			writer.newLine();
-//			System.out.println();
 		}
-//		System.out.println("before flushing");
-//		writer.flush();
-//		System.out.println("end decode batch");
 	}
 
 	public void setPython_path(String python_path) {

@@ -1,15 +1,8 @@
 package it.cnr.istc.stlab.felg;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -59,22 +52,9 @@ public class Main {
 			List<String> weights = new ArrayList<>();
 			weights.add(config.getString("weights"));
 
-			// set in/out
-			PipedOutputStream textOutputStream = new PipedOutputStream();
-			PipedInputStream wsdInputStream = new PipedInputStream(textOutputStream);
-
-			PipedInputStream annotatedTextInputStream = new PipedInputStream();
-			PrintStream wsdOutputStream = new PrintStream(new PipedOutputStream(annotatedTextInputStream));
-
-//			System.setIn(wsdInputStream);
-//			System.setOut(wsdOutputStream);
-
-//			BufferedReader br = new BufferedReader(new InputStreamReader(annotatedTextInputStream));
 
 			// initialize WSD
-			WSDRunnable r = new WSDRunnable(python_path, data_path, weights,
-					new BufferedWriter(new OutputStreamWriter(wsdOutputStream)),
-					new BufferedReader(new InputStreamReader(wsdInputStream)));
+			WSDRunnable r = new WSDRunnable(python_path, data_path, weights);
 			new Thread(r).start();
 
 			// wait until the wsd is initialized
@@ -86,6 +66,7 @@ public class Main {
 
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
 			BlockingQueue<AnnotatedWord> aws = r.getOutChannel();
+			BlockingQueue<String> inChannel= r.getInChannel();
 			for (String filepath : filepaths) {
 				logger.trace("Processing " + filepath);
 				if (!FilenameUtils.getExtension(filepath).equals("bz2")) {
@@ -103,7 +84,7 @@ public class Main {
 					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
 						String textSentence = sentence.get(TextAnnotation.class);
 						try {
-							textOutputStream.write((textSentence + "\n").getBytes());
+							inChannel.add(textSentence + "\n");
 							AnnotatedWord aw;
 							boolean stop = false;
 
@@ -144,23 +125,18 @@ public class Main {
 		private String python_path;
 		private String data_path;
 		private List<String> weights;
-		private BufferedWriter writer;
-		private BufferedReader reader;
 
-		public WSDRunnable(String python_path, String data_path, List<String> weights, BufferedWriter writer,
-				BufferedReader reader) {
+		public WSDRunnable(String python_path, String data_path, List<String> weights) {
 			super();
 			this.python_path = python_path;
 			this.data_path = data_path;
 			this.weights = weights;
-			this.writer = writer;
-			this.reader = reader;
 		}
 
 		@Override
 		public void run() {
 			try {
-				this.nwd = new NeuralWSDDecode(python_path, data_path, weights, writer, reader);
+				this.nwd = new NeuralWSDDecode(python_path, data_path, weights);
 				this.nwd.decode();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -173,6 +149,10 @@ public class Main {
 
 		public BlockingQueue<AnnotatedWord> getOutChannel() {
 			return nwd.getOutChannel();
+		}
+		
+		public BlockingQueue<String> getInChannel() {
+			return nwd.getInChannel();
 		}
 	}
 }
