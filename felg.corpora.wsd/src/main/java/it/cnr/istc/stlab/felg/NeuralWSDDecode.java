@@ -174,6 +174,7 @@ public class NeuralWSDDecode {
 			writer.newLine();
 			System.out.println();
 		}
+		System.out.println("before flushing");
 		writer.flush();
 		System.out.println("end decode batch");
 	}
