@@ -42,13 +42,13 @@ RUN sudo apt-get install -y git;
 
 # Clone repositories
 # UFSAC Repository
-RUN git clone https://github.com/getalp/UFSAC.git && \
-	 cd UFSAC/java && \
-	 mvn install && \
-	 cd ../../;
+RUN cd /app &&  git clone https://github.com/getalp/UFSAC.git
+#	 cd UFSAC/java && \
+#	 mvn install && \
+#	 cd ../../;
 
 # Disambiguate Repository
-RUN git clone https://github.com/getalp/disambiguate.git && \
-	cd disambiguate/java && \
-	mvn compile && \
-	cd ../../;
+RUN cd /app && git clone https://github.com/getalp/disambiguate.git
+#	cd disambiguate/java && \
+#	mvn compile && \
+#	cd ../../;
