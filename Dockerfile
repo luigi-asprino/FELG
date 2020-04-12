@@ -41,7 +41,7 @@ RUN pip3 install torchtext configargparse && conda install -c conda-forge pytorc
 RUN sudo apt-get install -y git;
 
 # Clone repositories
-# UFSAC Repository
+# UFSAC Repository	
 RUN cd /app &&  git clone https://github.com/getalp/UFSAC.git && \
 	 cd UFSAC/java && \
 	 mvn install && \
