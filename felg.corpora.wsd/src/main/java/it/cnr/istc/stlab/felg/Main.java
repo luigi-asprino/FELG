@@ -55,7 +55,7 @@ public class Main {
 			String outputFolder = config.getString("outputFolder");
 			String python_path = config.getString("python_path");
 			String data_path = config.getString("data_path");
-			boolean useOnlyAbstract = config.getBoolean("outputFolder");
+			boolean useOnlyAbstract = config.getBoolean("useOnlyAbstract");
 			boolean excludeWrite = config.getBoolean("excludeWrite");
 			List<String> weights = new ArrayList<>();
 			weights.add(config.getString("weights"));
