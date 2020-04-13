@@ -39,13 +39,13 @@ public class MainParallel {
 			logger.info("Reading folder " + config.getString("wikiFolder"));
 			logger.info("Output Folder folder " + config.getString("outputFolder"));
 			logger.debug("Absolute path " + (new File(config.getString("wikiFolder"))).getAbsolutePath());
+			
 
 			Properties props = new Properties();
 			props.setProperty("annotators", "tokenize, ssplit, pos");
 			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
 			CorpusLemmatizer lemmatizer = new CorpusLemmatizer();
-//			CorpusPOSTagger posTagger = new CorpusPOSTagger(false);
 
 			String outputFolder = config.getString("outputFolder");
 			String python_path = config.getString("python_path");

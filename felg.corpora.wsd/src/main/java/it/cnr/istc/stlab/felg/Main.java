@@ -28,6 +28,7 @@ import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 public class Main {
 
 	private static final Logger logger = LogManager.getLogger(Main.class);
+	private static final int SENTENCE_THRESHOLD = 150;
 
 	public static void main(String[] args) throws CompressorException, IOException {
 		logger.info("Running FELG");
@@ -50,11 +51,12 @@ public class Main {
 			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
 			CorpusLemmatizer lemmatizer = new CorpusLemmatizer();
-//			CorpusPOSTagger posTagger = new CorpusPOSTagger(false);
 
 			String outputFolder = config.getString("outputFolder");
 			String python_path = config.getString("python_path");
 			String data_path = config.getString("data_path");
+			boolean useOnlyAbstract = config.getBoolean("outputFolder");
+			boolean excludeWrite = config.getBoolean("excludeWrite");
 			List<String> weights = new ArrayList<>();
 			weights.add(config.getString("weights"));
 
@@ -75,9 +77,16 @@ public class Main {
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
 
-					Annotation annotation = new Annotation(aar.getText(true));
+					Annotation annotation;
+
+					if (useOnlyAbstract) {
+						annotation = new Annotation(aar.getAbstract(true));
+					} else {
+						annotation = new Annotation(aar.getText(true));
+					}
+
 					pipeline.annotate(annotation);
-					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
+
 					List<Sentence> sentenceBatch = new ArrayList<>();
 
 					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
@@ -89,40 +98,58 @@ public class Main {
 							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
 							words.add(word);
 						}
-						Sentence wsdSentence = new Sentence(words);
-						lemmatizer.tag(wsdSentence.getWords());
-						sentenceBatch.add(wsdSentence);
+
+						if (words.size() > SENTENCE_THRESHOLD) {
+							for (int i = 0; i < words.size(); i += SENTENCE_THRESHOLD) {
+								if (((i + 1) * SENTENCE_THRESHOLD) < words.size()) {
+									Sentence wsdSentence = new Sentence(words.subList(i, (i + 1) * SENTENCE_THRESHOLD));
+									lemmatizer.tag(wsdSentence.getWords());
+									sentenceBatch.add(wsdSentence);
+								} else {
+									Sentence wsdSentence = new Sentence(words.subList(i, words.size()));
+									lemmatizer.tag(wsdSentence.getWords());
+									sentenceBatch.add(wsdSentence);
+								}
+							}
+						} else {
+							Sentence wsdSentence = new Sentence(words);
+							lemmatizer.tag(wsdSentence.getWords());
+							sentenceBatch.add(wsdSentence);
+						}
 
 					});
 
 					nwd.disambiguateBatch(sentenceBatch);
 
-					sentenceBatch.forEach(wsdSentence -> {
-						try {
-							StringBuilder sb = new StringBuilder();
-							wsdSentence.getWords().forEach(w -> {
-								sb.append(w.getValue());
-								if (w.hasAnnotation("wsd")) {
-									sb.append('|');
-									sb.append(w.getAnnotationValue("wsd"));
-								}
-								sb.append(' ');
-							});
-							sb.append('\n');
-							fos.write(sb.toString().getBytes());
-							fos.flush();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					});
-					
+					if (!excludeWrite) {
+						FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
+						sentenceBatch.forEach(wsdSentence -> {
+							try {
+								StringBuilder sb = new StringBuilder();
+								wsdSentence.getWords().forEach(w -> {
+									sb.append(w.getValue());
+									if (w.hasAnnotation("wsd")) {
+										sb.append('|');
+										sb.append(w.getAnnotationValue("wsd"));
+									}
+									sb.append(' ');
+								});
+								sb.append('\n');
+								fos.write(sb.toString().getBytes());
+								fos.flush();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						});
+						fos.flush();
+						fos.close();
+					}
+
 					long t1 = System.currentTimeMillis();
 					long elapsed = t1 - t0;
 					count++;
 					long timePerArticle = (long) ((double) elapsed / (double) count);
 					logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms");
-					fos.flush();
-					fos.close();
 				}
 			}
 			// closing wsd
