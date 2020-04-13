@@ -61,6 +61,8 @@ public class Main {
 			weights.add(config.getString("weights"));
 
 			long t0 = System.currentTimeMillis();
+			long preprocessing = System.currentTimeMillis();
+			long postProcessing = System.currentTimeMillis();
 			long count = 0;
 
 			// initialize WSD
@@ -78,6 +80,8 @@ public class Main {
 				while ((aar = ar.nextArticle()) != null) {
 
 					Annotation annotation;
+
+					long pre = System.currentTimeMillis();
 
 					if (useOnlyAbstract) {
 						annotation = new Annotation(aar.getAbstract(true));
@@ -118,8 +122,11 @@ public class Main {
 						}
 
 					});
+					long pre2 = System.currentTimeMillis();
 
 					nwd.disambiguateBatch(sentenceBatch);
+
+					long post1 = System.currentTimeMillis();
 
 					if (!excludeWrite) {
 						FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
@@ -145,11 +152,19 @@ public class Main {
 						fos.close();
 					}
 
+					preprocessing = preprocessing + (pre2 - pre);
+
 					long t1 = System.currentTimeMillis();
+
+					postProcessing = postProcessing + (t1 - post1);
+
 					long elapsed = t1 - t0;
 					count++;
 					long timePerArticle = (long) ((double) elapsed / (double) count);
-					logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms");
+					long timePerPreprocessing = (long) ((double) preprocessing / (double) count);
+					long timePerPostprocessing = (long) ((double) postProcessing / (double) count);
+					logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms " + timePerPreprocessing
+							+ "ms " + timePerPostprocessing + "ms");
 				}
 			}
 			// closing wsd
