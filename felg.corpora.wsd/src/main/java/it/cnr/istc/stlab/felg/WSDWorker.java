@@ -47,7 +47,6 @@ public class WSDWorker implements Runnable {
 	@Override
 	public void run() {
 		try {
-			logger.info("WSD initialized");
 
 			for (String filepath : filepaths) {
 				logger.trace("Processing " + filepath);

@@ -63,7 +63,6 @@ public class Main {
 
 			// initialize WSD
 			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
-
 			logger.info("WSD initialized");
 
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
@@ -76,14 +75,7 @@ public class Main {
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
 
-					long t1 = System.currentTimeMillis();
-					long elapsed = t1 - t0;
-					count++;
-					long timePerArticle = (long) ((double) elapsed / (double) count);
-
-					logger.trace("Processing " + aar.getTitle() + " " + timePerArticle + "ms");
-
-					Annotation annotation = new Annotation(aar.getAbstract(true));
+					Annotation annotation = new Annotation(aar.getText(true));
 					pipeline.annotate(annotation);
 					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
 					List<Sentence> sentenceBatch = new ArrayList<>();
@@ -123,8 +115,12 @@ public class Main {
 							e.printStackTrace();
 						}
 					});
-
-					logger.trace("Ending " + aar.getTitle());
+					
+					long t1 = System.currentTimeMillis();
+					long elapsed = t1 - t0;
+					count++;
+					long timePerArticle = (long) ((double) elapsed / (double) count);
+					logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms");
 					fos.flush();
 					fos.close();
 				}
