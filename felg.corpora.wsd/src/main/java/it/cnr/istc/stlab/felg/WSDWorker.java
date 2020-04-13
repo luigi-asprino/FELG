@@ -5,11 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.compress.compressors.CompressorException;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -23,50 +20,43 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import getalp.wsd.ufsac.core.Sentence;
 import getalp.wsd.ufsac.core.Word;
 import getalp.wsd.ufsac.utils.CorpusLemmatizer;
-import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
-public class Main {
+public class WSDWorker implements Runnable {
 
-	private static final Logger logger = LogManager.getLogger(Main.class);
+	private List<String> filepaths, weights;
+	private String python_path, data_path,outputFolder;
+	private static final Logger logger = LogManager.getLogger(WSDWorker.class);
+	private AtomicLong count;
+	private final long t0;
+	private StanfordCoreNLP pipeline;
+	private CorpusLemmatizer lemmatizer;
+	
+	
 
-	public static void main(String[] args) throws CompressorException, IOException {
-		logger.info("Running FELG");
+	public WSDWorker(List<String> filepaths, List<String> weights, String outputFolder, String python_path,
+			String data_path, AtomicLong count, StanfordCoreNLP pipeline, CorpusLemmatizer lemmatizer, long t0) {
+		super();
+		this.filepaths = filepaths;
+		this.weights = weights;
+		this.outputFolder = outputFolder;
+		this.python_path = python_path;
+		this.data_path = data_path;
+		this.count = count;
+		this.pipeline = pipeline;
+		this.lemmatizer = lemmatizer;
+		this.t0=t0;
+	}
 
+
+
+	@Override
+	public void run() {
+		// initialize WSD
+		NeuralWSDDecode nwd;
 		try {
-			Configurations configs = new Configurations();
-			Configuration config;
-			if (args.length > 0) {
-				config = configs.properties(args[0]);
-			} else {
-				config = configs.properties("config.properties");
-			}
-
-			logger.info("Reading folder " + config.getString("wikiFolder"));
-			logger.info("Output Folder folder " + config.getString("outputFolder"));
-			logger.debug("Absolute path " + (new File(config.getString("wikiFolder"))).getAbsolutePath());
-
-			Properties props = new Properties();
-			props.setProperty("annotators", "tokenize, ssplit, pos");
-			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-
-			CorpusLemmatizer lemmatizer = new CorpusLemmatizer();
-//			CorpusPOSTagger posTagger = new CorpusPOSTagger(false);
-
-			String outputFolder = config.getString("outputFolder");
-			String python_path = config.getString("python_path");
-			String data_path = config.getString("data_path");
-			List<String> weights = new ArrayList<>();
-			weights.add(config.getString("weights"));
-
-			long t0 = System.currentTimeMillis();
-			long count = 0;
-
-			// initialize WSD
-			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
-
+			nwd = new NeuralWSDDecode(python_path, data_path, weights);
 			logger.info("WSD initialized");
 
-			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
 			for (String filepath : filepaths) {
 				logger.trace("Processing " + filepath);
 				if (!FilenameUtils.getExtension(filepath).equals("bz2")) {
@@ -78,8 +68,7 @@ public class Main {
 
 					long t1 = System.currentTimeMillis();
 					long elapsed = t1 - t0;
-					count++;
-					long timePerArticle = (long) ((double) elapsed / (double) count);
+					long timePerArticle = (long) ((double) elapsed / (double) count.incrementAndGet());
 
 					logger.trace("Processing " + aar.getTitle() + " " + timePerArticle + "ms");
 
@@ -131,8 +120,9 @@ public class Main {
 			}
 			// closing wsd
 			nwd.close();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
 
 	}
