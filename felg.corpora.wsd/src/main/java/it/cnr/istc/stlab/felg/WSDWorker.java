@@ -31,9 +31,10 @@ public class WSDWorker implements Runnable {
 	private StanfordCoreNLP pipeline;
 	private CorpusLemmatizer lemmatizer;
 	private NeuralWSDDecode nwd;
+	private boolean useOnlyAbstract, excludeWrite;
 
 	public WSDWorker(List<String> filepaths, NeuralWSDDecode nwd, String outputFolder, AtomicLong count,
-			StanfordCoreNLP pipeline, CorpusLemmatizer lemmatizer, long t0) {
+			StanfordCoreNLP pipeline, CorpusLemmatizer lemmatizer, long t0, boolean useOnlyAbstract, boolean excludeWrite) {
 		super();
 		this.filepaths = filepaths;
 		this.outputFolder = outputFolder;
@@ -42,6 +43,8 @@ public class WSDWorker implements Runnable {
 		this.pipeline = pipeline;
 		this.lemmatizer = lemmatizer;
 		this.t0 = t0;
+		this.useOnlyAbstract = useOnlyAbstract;
+		this.excludeWrite = excludeWrite;
 	}
 
 	@Override
@@ -57,15 +60,16 @@ public class WSDWorker implements Runnable {
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
 
-					long t1 = System.currentTimeMillis();
-					long elapsed = t1 - t0;
-					long timePerArticle = (long) ((double) elapsed / (double) count.incrementAndGet());
+					Annotation annotation;
 
-					logger.trace("Processing " + aar.getTitle() + " " + timePerArticle + "ms");
+					if (useOnlyAbstract) {
+						annotation = new Annotation(aar.getAbstract(true));
+					} else {
+						annotation = new Annotation(aar.getText(true));
+					}
 
-					Annotation annotation = new Annotation(aar.getAbstract(true));
 					pipeline.annotate(annotation);
-					FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
+
 					List<Sentence> sentenceBatch = new ArrayList<>();
 
 					annotation.get(SentencesAnnotation.class).forEach(sentence -> {
@@ -77,42 +81,64 @@ public class WSDWorker implements Runnable {
 							word.setAnnotation("pos", tokens[i].get(PartOfSpeechAnnotation.class));
 							words.add(word);
 						}
-						Sentence wsdSentence = new Sentence(words);
-						lemmatizer.tag(wsdSentence.getWords());
-						sentenceBatch.add(wsdSentence);
+
+						if (words.size() > Main.SENTENCE_THRESHOLD) {
+							for (int i = 0; i < words.size(); i += Main.SENTENCE_THRESHOLD) {
+								if (((i + 1) * Main.SENTENCE_THRESHOLD) < words.size()) {
+									Sentence wsdSentence = new Sentence(
+											words.subList(i, (i + 1) * Main.SENTENCE_THRESHOLD));
+									lemmatizer.tag(wsdSentence.getWords());
+									sentenceBatch.add(wsdSentence);
+								} else {
+									Sentence wsdSentence = new Sentence(words.subList(i, words.size()));
+									lemmatizer.tag(wsdSentence.getWords());
+									sentenceBatch.add(wsdSentence);
+								}
+							}
+						} else {
+							Sentence wsdSentence = new Sentence(words);
+							lemmatizer.tag(wsdSentence.getWords());
+							sentenceBatch.add(wsdSentence);
+						}
 
 					});
 
 					nwd.disambiguateBatch(sentenceBatch);
 
-					sentenceBatch.forEach(wsdSentence -> {
-						try {
-							StringBuilder sb = new StringBuilder();
-							wsdSentence.getWords().forEach(w -> {
-								sb.append(w.getValue());
-								if (w.hasAnnotation("wsd")) {
-									sb.append('|');
-									sb.append(w.getAnnotationValue("wsd"));
-								}
-								sb.append(' ');
-							});
-							sb.append('\n');
-							fos.write(sb.toString().getBytes());
-							fos.flush();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					});
+					if (!excludeWrite) {
+						FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
+						sentenceBatch.forEach(wsdSentence -> {
+							try {
+								StringBuilder sb = new StringBuilder();
+								wsdSentence.getWords().forEach(w -> {
+									sb.append(w.getValue());
+									if (w.hasAnnotation("wsd")) {
+										sb.append('|');
+										sb.append(w.getAnnotationValue("wsd"));
+									}
+									sb.append(' ');
+								});
+								sb.append('\n');
+								fos.write(sb.toString().getBytes());
+								fos.flush();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						});
+						fos.flush();
+						fos.close();
+					}
 
-					logger.trace("Ending " + aar.getTitle());
-					fos.flush();
-					fos.close();
+					long t1 = System.currentTimeMillis();
+
+					long elapsed = t1 - t0;
+					long timePerArticle = (long) ((double) elapsed / (double) count.get());
+					logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms ");
 				}
 			}
 			// closing wsd
 			nwd.close();
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 

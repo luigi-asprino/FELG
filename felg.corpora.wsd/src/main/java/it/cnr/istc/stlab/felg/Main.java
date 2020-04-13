@@ -28,7 +28,7 @@ import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 public class Main {
 
 	private static final Logger logger = LogManager.getLogger(Main.class);
-	private static final int SENTENCE_THRESHOLD = 150;
+	public static final int SENTENCE_THRESHOLD = 150;
 
 	public static void main(String[] args) throws CompressorException, IOException {
 		logger.info("Running FELG");

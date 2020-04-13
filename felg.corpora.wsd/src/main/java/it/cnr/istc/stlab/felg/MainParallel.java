@@ -51,6 +51,8 @@ public class MainParallel {
 			String python_path = config.getString("python_path");
 			String data_path = config.getString("data_path");
 			int concurent_threads = config.getInt("concurrent_threads");
+			boolean useOnlyAbstract = config.getBoolean("useOnlyAbstract");
+			boolean excludeWrite = config.getBoolean("excludeWrite");
 			List<String> weights = new ArrayList<>();
 			weights.add(config.getString("weights"));
 
@@ -78,7 +80,7 @@ public class MainParallel {
 			ExecutorService executor = Executors.newFixedThreadPool(concurent_threads);
 			for (int i = 0; i < concurent_threads; i++) {
 				executor.execute(new WSDWorker(listsToProcess.get(i), nwd, outputFolder,
-						count, pipeline, lemmatizer, t0));
+						count, pipeline, lemmatizer, t0,useOnlyAbstract,excludeWrite));
 			}
 			executor.awaitTermination(10, TimeUnit.DAYS);
 
