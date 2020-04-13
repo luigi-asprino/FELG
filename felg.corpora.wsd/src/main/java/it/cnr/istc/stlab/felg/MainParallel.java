@@ -57,7 +57,9 @@ public class MainParallel {
 			long t0 = System.currentTimeMillis();
 			AtomicLong count = new AtomicLong();
 			
+			// initialize wsd
 			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
+			logger.info("WSD initialized");
 
 			// splitting input
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
