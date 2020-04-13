@@ -53,10 +53,10 @@ RUN cd /app && git clone https://github.com/getalp/disambiguate.git
 #	mvn compile && \
 #	cd ../../;
 	
-RUN cd /app && git clone https://github.com/stlab-istc-cnr/FELG.git
+#RUN cd /app && git clone https://github.com/stlab-istc-cnr/FELG.git
 #	cd FELG/felg.corpora.wsd && \
 #	mvn clean install && \
 #	cd ../../;
 
-COPY felg.corpora.wsd/wiki_wsd.jar /app/FELG
+#COPY felg.corpora.wsd/wiki_wsd.jar /app/FELG
 
