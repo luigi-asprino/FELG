@@ -42,19 +42,21 @@ RUN sudo apt-get install -y git;
 
 # Clone repositories
 # UFSAC Repository	
-RUN cd /app &&  git clone https://github.com/getalp/UFSAC.git && \
-	 cd UFSAC/java && \
-	 mvn install && \
-	 cd ../../;
+RUN cd /app &&  git clone https://github.com/getalp/UFSAC.git 
+#	 cd UFSAC/java && \
+#	 mvn install && \
+#	 cd ../../;
 
 # Disambiguate Repository
-RUN cd /app && git clone https://github.com/getalp/disambiguate.git && \
-	cd disambiguate/java && \
-	mvn compile && \
-	cd ../../;
+RUN cd /app && git clone https://github.com/getalp/disambiguate.git
+#	cd disambiguate/java && \
+#	mvn compile && \
+#	cd ../../;
 	
-RUN cd /app && git clone https://github.com/stlab-istc-cnr/FELG.git && \
-	cd FELG/felg.corpora.wsd && \
-	mvn clean install && \
-	cd ../../;
+RUN cd /app && git clone https://github.com/stlab-istc-cnr/FELG.git
+#	cd FELG/felg.corpora.wsd && \
+#	mvn clean install && \
+#	cd ../../;
+
+COPY felg.corpora.wsd/wiki_wsd.jar /app/FELG
 
