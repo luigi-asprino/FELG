@@ -56,6 +56,8 @@ public class MainParallel {
 
 			long t0 = System.currentTimeMillis();
 			AtomicLong count = new AtomicLong();
+			
+			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
 
 			// splitting input
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
@@ -73,7 +75,7 @@ public class MainParallel {
 
 			ExecutorService executor = Executors.newFixedThreadPool(concurent_threads);
 			for (int i = 0; i < concurent_threads; i++) {
-				executor.execute(new WSDWorker(listsToProcess.get(i), weights, outputFolder, python_path, data_path,
+				executor.execute(new WSDWorker(listsToProcess.get(i), nwd, outputFolder,
 						count, pipeline, lemmatizer, t0));
 			}
 			executor.awaitTermination(10, TimeUnit.DAYS);

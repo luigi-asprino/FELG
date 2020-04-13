@@ -23,38 +23,30 @@ import getalp.wsd.ufsac.utils.CorpusLemmatizer;
 
 public class WSDWorker implements Runnable {
 
-	private List<String> filepaths, weights;
-	private String python_path, data_path,outputFolder;
+	private List<String> filepaths;
+	private String outputFolder;
 	private static final Logger logger = LogManager.getLogger(WSDWorker.class);
 	private AtomicLong count;
 	private final long t0;
 	private StanfordCoreNLP pipeline;
 	private CorpusLemmatizer lemmatizer;
-	
-	
+	private NeuralWSDDecode nwd;
 
-	public WSDWorker(List<String> filepaths, List<String> weights, String outputFolder, String python_path,
-			String data_path, AtomicLong count, StanfordCoreNLP pipeline, CorpusLemmatizer lemmatizer, long t0) {
+	public WSDWorker(List<String> filepaths, NeuralWSDDecode nwd, String outputFolder, AtomicLong count,
+			StanfordCoreNLP pipeline, CorpusLemmatizer lemmatizer, long t0) {
 		super();
 		this.filepaths = filepaths;
-		this.weights = weights;
 		this.outputFolder = outputFolder;
-		this.python_path = python_path;
-		this.data_path = data_path;
+		this.nwd = nwd;
 		this.count = count;
 		this.pipeline = pipeline;
 		this.lemmatizer = lemmatizer;
-		this.t0=t0;
+		this.t0 = t0;
 	}
-
-
 
 	@Override
 	public void run() {
-		// initialize WSD
-		NeuralWSDDecode nwd;
 		try {
-			nwd = new NeuralWSDDecode(python_path, data_path, weights);
 			logger.info("WSD initialized");
 
 			for (String filepath : filepaths) {
