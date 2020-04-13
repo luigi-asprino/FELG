@@ -129,15 +129,14 @@ public class WSDWorker implements Runnable {
 						fos.close();
 					}
 
-					long t1 = System.currentTimeMillis();
 
-					long elapsed = t1 - t0;
-					long timePerArticle = (long) ((double) elapsed / (double) count.get());
+					long elapsed = System.currentTimeMillis() - t0;
+					long timePerArticle = (long) ((double) elapsed / (double) count.incrementAndGet());
 					logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms ");
 				}
 			}
 			// closing wsd
-			nwd.close();
+//			nwd.close();
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}

@@ -39,7 +39,6 @@ public class MainParallel {
 			logger.info("Reading folder " + config.getString("wikiFolder"));
 			logger.info("Output Folder folder " + config.getString("outputFolder"));
 			logger.debug("Absolute path " + (new File(config.getString("wikiFolder"))).getAbsolutePath());
-			
 
 			Properties props = new Properties();
 			props.setProperty("annotators", "tokenize, ssplit, pos");
@@ -58,7 +57,7 @@ public class MainParallel {
 
 			long t0 = System.currentTimeMillis();
 			AtomicLong count = new AtomicLong();
-			
+
 			// initialize wsd
 			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
 			logger.info("WSD initialized");
@@ -79,8 +78,8 @@ public class MainParallel {
 
 			ExecutorService executor = Executors.newFixedThreadPool(concurent_threads);
 			for (int i = 0; i < concurent_threads; i++) {
-				executor.execute(new WSDWorker(listsToProcess.get(i), nwd, outputFolder,
-						count, pipeline, lemmatizer, t0,useOnlyAbstract,excludeWrite));
+				executor.execute(new WSDWorker(listsToProcess.get(i), nwd, outputFolder, count, pipeline, lemmatizer,
+						t0, useOnlyAbstract, excludeWrite));
 			}
 			executor.awaitTermination(10, TimeUnit.DAYS);
 
