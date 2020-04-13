@@ -65,22 +65,18 @@ public class MainParallel {
 			// splitting input
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
 			List<List<String>> listsToProcess = new ArrayList<>();
-			int listSize = filepaths.size() / concurent_threads;
-			for (int i = 0; i < concurent_threads; i++) {
-				if ((i + 1) * listSize > filepaths.size()) {
-					logger.trace(String.format("From %s to %s", i * listSize, filepaths.size()));
-					listsToProcess.add(filepaths.subList(i * listSize, filepaths.size()));
-				} else {
-					logger.trace(String.format("From %s to %s", i * listSize, (i + 1) * listSize));
-					listsToProcess.add(filepaths.subList(i * listSize, (i + 1) * listSize));
-				}
+			for (int i = 0; i < filepaths.size(); i += concurent_threads) {
+				listsToProcess.add(filepaths.subList(i,
+			            Math.min(i + concurent_threads, filepaths.size())));
 			}
+
 
 			ExecutorService executor = Executors.newFixedThreadPool(concurent_threads);
 			for (int i = 0; i < concurent_threads; i++) {
 				executor.execute(new WSDWorker(listsToProcess.get(i), nwd, outputFolder, count, pipeline, lemmatizer,
 						t0, useOnlyAbstract, excludeWrite));
 			}
+			executor.shutdown();
 			executor.awaitTermination(10, TimeUnit.DAYS);
 
 		} catch (Exception e) {
