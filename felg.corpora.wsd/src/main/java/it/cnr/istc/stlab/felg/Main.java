@@ -61,8 +61,8 @@ public class Main {
 			weights.add(config.getString("weights"));
 
 			long t0 = System.currentTimeMillis();
-			long preprocessing = System.currentTimeMillis();
-			long postProcessing = System.currentTimeMillis();
+			long preprocessing = 0;
+			long postProcessing = 0;
 			long count = 0;
 
 			// initialize WSD
