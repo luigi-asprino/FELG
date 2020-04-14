@@ -55,16 +55,13 @@ public class MainParallel {
 			boolean useOnlyAbstract = config.getBoolean("useOnlyAbstract");
 			boolean excludeWrite = config.getBoolean("excludeWrite");
 
-			long t0 = System.currentTimeMillis();
 			AtomicLong count = new AtomicLong();
 
 			// initialize wsd
-//			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
-//			logger.info("WSD initialized");
 			NeuralWSDDecode[] nwds = new NeuralWSDDecode[concurent_threads];
 			for (int i = 0; i < concurent_threads; i++) {
-				nwds[i] = new NeuralWSDDecode(python_path, data_path + i,
-						Lists.newArrayList((config.getString("weights").replace("/model/", "/model" + i + "/"))));
+				nwds[i] = new NeuralWSDDecode(python_path, data_path,
+						Lists.newArrayList((config.getString("weights"))));
 				logger.info("WSD initialized");
 			}
 
@@ -78,6 +75,7 @@ public class MainParallel {
 			}
 
 			ExecutorService executor = Executors.newFixedThreadPool(concurent_threads);
+			long t0 = System.currentTimeMillis();
 			for (int i = 0; i < concurent_threads; i++) {
 				executor.execute(new WSDWorker(listsToProcess.get(i), nwds[i], outputFolder, count, pipeline,
 						lemmatizer, t0, useOnlyAbstract, excludeWrite));
