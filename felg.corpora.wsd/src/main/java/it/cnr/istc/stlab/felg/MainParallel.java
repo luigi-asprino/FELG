@@ -89,9 +89,9 @@ public class MainParallel {
 				executor.execute(new WSDWorker(listsToProcess.get(i), nwds[i], outputFolder, count, pipeline,
 						lemmatizer, t0, useOnlyAbstract, excludeWrite, useCompression));
 			}
-			logger.info("Number of articles processed "+ count.get());
 			executor.shutdown();
 			executor.awaitTermination(10, TimeUnit.DAYS);
+			logger.info("Number of articles processed "+ count.get());
 			for (int i = 0; i < concurent_threads; i++) {
 				nwds[i].close();
 				logger.info("Closing WSD");
