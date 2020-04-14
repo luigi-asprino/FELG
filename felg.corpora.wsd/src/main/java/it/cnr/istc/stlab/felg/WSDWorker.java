@@ -26,6 +26,7 @@ public class WSDWorker implements Runnable {
 	private List<String> filepaths;
 	private String outputFolder;
 	private static final Logger logger = LogManager.getLogger(WSDWorker.class);
+	public static final int SENTENCE_THRESHOLD = 150;
 	private AtomicLong count;
 	private final long t0;
 	private StanfordCoreNLP pipeline;
@@ -88,11 +89,11 @@ public class WSDWorker implements Runnable {
 								words.add(word);
 							}
 
-							if (words.size() > Main.SENTENCE_THRESHOLD) {
-								for (int i = 0; i < words.size(); i += Main.SENTENCE_THRESHOLD) {
-									if (((i + 1) * Main.SENTENCE_THRESHOLD) < words.size()) {
+							if (words.size() > SENTENCE_THRESHOLD) {
+								for (int i = 0; i < words.size(); i += SENTENCE_THRESHOLD) {
+									if (((i + 1) * SENTENCE_THRESHOLD) < words.size()) {
 										Sentence wsdSentence = new Sentence(
-												words.subList(i, (i + 1) * Main.SENTENCE_THRESHOLD));
+												words.subList(i, (i + 1) * SENTENCE_THRESHOLD));
 										lemmatizer.tag(wsdSentence.getWords());
 										sentenceBatch.add(wsdSentence);
 									} else {
