@@ -52,6 +52,7 @@ public class MainParallel {
 			String python_path = config.getString("python_path");
 			String data_path = config.getString("data_path");
 			int concurent_threads = config.getInt("concurrent_threads");
+			int batch_size = config.getInt("batch_size");
 			boolean useOnlyAbstract = config.getBoolean("useOnlyAbstract");
 			boolean excludeWrite = config.getBoolean("excludeWrite");
 
@@ -61,7 +62,7 @@ public class MainParallel {
 			NeuralWSDDecode[] nwds = new NeuralWSDDecode[concurent_threads];
 			for (int i = 0; i < concurent_threads; i++) {
 				nwds[i] = new NeuralWSDDecode(python_path, data_path,
-						Lists.newArrayList((config.getString("weights"))));
+						Lists.newArrayList(config.getString("weights")),batch_size);
 				logger.info("WSD initialized");
 			}
 
@@ -82,7 +83,6 @@ public class MainParallel {
 			}
 			executor.shutdown();
 			executor.awaitTermination(10, TimeUnit.DAYS);
-			
 			for (int i = 0; i < concurent_threads; i++) {
 				nwds[i].close();
 				logger.info("Closing WSD");

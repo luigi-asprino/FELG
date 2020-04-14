@@ -24,6 +24,7 @@ public class NeuralWSDDecode {
 	private List<String> weights;
 	private boolean filterLemma;
 	private boolean mfsBackoff;
+	private int batch_size=1;
 	private Disambiguator firstSenseDisambiguator;
 	private NeuralDisambiguator neuralDisambiguator;
 
@@ -35,6 +36,10 @@ public class NeuralWSDDecode {
 	}
 
 	public NeuralWSDDecode(String python_path, String data_path, List<String> weights) throws Exception {
+		this(python_path, data_path, weights, 1);
+	}
+	
+	public NeuralWSDDecode(String python_path, String data_path, List<String> weights,int batch_size) throws Exception {
 		this.python_path = python_path;
 		this.data_path = data_path;
 		this.weights = weights;
@@ -55,7 +60,7 @@ public class NeuralWSDDecode {
 		parser.addArgument("sense_compression_antonyms", "false");
 		parser.addArgument("sense_compression_file", "");
 		parser.addArgument("clear_text", "true");
-		parser.addArgument("batch_size", "1");
+		parser.addArgument("batch_size", batch_size+"");
 		parser.addArgument("truncate_max_length", "150");
 		parser.addArgument("filter_lemma", "true");
 		parser.addArgument("mfs_backoff", "true");
