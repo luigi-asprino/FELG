@@ -140,7 +140,7 @@ public class WSDWorker implements Runnable {
 						elapsed = System.currentTimeMillis() - t0;
 						timePerArticle = (long) ((double) elapsed / (double) count.incrementAndGet());
 						logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms "
-								+ (t1article - t0article) + "ms");
+								+ (t1article - t0article) + "ms "+ sentenceBatch.size()+" ");
 					} catch (Exception e) {
 						logger.error("Error processing " + aar.getTitle());
 						e.printStackTrace();
