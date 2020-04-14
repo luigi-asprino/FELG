@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.ConfigurationUtils;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -52,14 +53,16 @@ public class MainParallel {
 			boolean excludeWrite = config.getBoolean("excludeWrite");
 			boolean useCompression = config.getBoolean("useCompression");
 
-			logger.info("outputFolder " + outputFolder);
-			logger.info("python_path " + python_path);
-			logger.info("data_path " + data_path);
-			logger.info("concurent_threads " + concurent_threads);
-			logger.info("batch_size " + batch_size);
-			logger.info("useOnlyAbstract " + useOnlyAbstract);
-			logger.info("excludeWrite " + excludeWrite);
-			logger.info("useCompression " + useCompression);
+//			logger.info("outputFolder " + outputFolder);
+//			logger.info("python_path " + python_path);
+//			logger.info("data_path " + data_path);
+//			logger.info("concurent_threads " + concurent_threads);
+//			logger.info("batch_size " + batch_size);
+//			logger.info("useOnlyAbstract " + useOnlyAbstract);
+//			logger.info("excludeWrite " + excludeWrite);
+//			logger.info("useCompression " + useCompression);
+			
+			logger.info(ConfigurationUtils.toString(config));
 
 			AtomicLong count = new AtomicLong();
 
@@ -86,6 +89,7 @@ public class MainParallel {
 				executor.execute(new WSDWorker(listsToProcess.get(i), nwds[i], outputFolder, count, pipeline,
 						lemmatizer, t0, useOnlyAbstract, excludeWrite, useCompression));
 			}
+			logger.info("Number of articles processed "+ count.get());
 			executor.shutdown();
 			executor.awaitTermination(10, TimeUnit.DAYS);
 			for (int i = 0; i < concurent_threads; i++) {
