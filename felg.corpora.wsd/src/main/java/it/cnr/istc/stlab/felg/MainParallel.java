@@ -73,7 +73,7 @@ public class MainParallel {
 			int chunkSize = filepaths.size() / concurent_threads;
 			for (int i = 0; i < filepaths.size(); i += chunkSize) {
 				listsToProcess.add(filepaths.subList(i, Math.min(i + chunkSize, filepaths.size())));
-				logger.trace(String.format("", i, Math.min(i + chunkSize, filepaths.size())));
+				logger.trace(String.format("from %s to %s", i, Math.min(i + chunkSize, filepaths.size())));
 			}
 
 			ExecutorService executor = Executors.newFixedThreadPool(concurent_threads);

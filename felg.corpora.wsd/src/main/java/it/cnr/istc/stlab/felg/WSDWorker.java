@@ -135,6 +135,7 @@ public class WSDWorker implements Runnable {
 						logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms ");
 					} catch (Exception e) {
 						logger.error("Error processing " + aar.getTitle());
+						e.printStackTrace();
 					}
 				}
 			}
