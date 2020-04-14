@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -62,6 +63,10 @@ public class WSDWorker implements Runnable {
 				if (!FilenameUtils.getExtension(filepath).equals("bz2")) {
 					continue;
 				}
+				// create folders for files
+				BZip2CompressorOutputStream cos = new BZip2CompressorOutputStream(new FileOutputStream(
+						new File(outputFolder + "/" + FilenameUtils.getBaseName(filepath) + ".bz2")));
+
 				ArchiveReader ar = new ArchiveReader(filepath);
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
@@ -113,7 +118,7 @@ public class WSDWorker implements Runnable {
 						nwd.disambiguateBatch(sentenceBatch);
 
 						if (!excludeWrite) {
-							FileOutputStream fos = new FileOutputStream(new File(outputFolder + "/" + aar.getTitle()));
+							cos.write(("==== Start <" + aar.getTitle() + "> ====\n").getBytes());
 							sentenceBatch.forEach(wsdSentence -> {
 								try {
 									StringBuilder sb = new StringBuilder();
@@ -126,26 +131,28 @@ public class WSDWorker implements Runnable {
 										sb.append(' ');
 									});
 									sb.append('\n');
-									fos.write(sb.toString().getBytes());
-									fos.flush();
+									cos.write(sb.toString().getBytes());
+									cos.flush();
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
 							});
-							fos.flush();
-							fos.close();
+							cos.write(("==== End <" + aar.getTitle() + "> ====\n").getBytes());
+							cos.flush();
 						}
 
 						t1article = System.currentTimeMillis();
 						elapsed = System.currentTimeMillis() - t0;
 						timePerArticle = (long) ((double) elapsed / (double) count.incrementAndGet());
 						logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms "
-								+ (t1article - t0article) + "ms "+ sentenceBatch.size()+" ");
+								+ (t1article - t0article) + "ms " + sentenceBatch.size() + " ");
 					} catch (Exception e) {
 						logger.error("Error processing " + aar.getTitle());
 						e.printStackTrace();
 					}
 				}
+				cos.flush();
+				cos.close();
 			}
 			// closing wsd
 //			nwd.close();

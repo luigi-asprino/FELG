@@ -87,6 +87,7 @@ public class MainParallel {
 				nwds[i].close();
 				logger.info("Closing WSD");
 			}
+			executor.shutdownNow();
 
 		} catch (Exception e) {
 			e.printStackTrace();
