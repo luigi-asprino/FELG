@@ -61,8 +61,8 @@ public class MainParallel {
 			// initialize wsd
 //			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
 //			logger.info("WSD initialized");
-			NeuralWSDDecode[] nwds =new NeuralWSDDecode[concurent_threads];
-			for(int i=0; i<concurent_threads;i++) {
+			NeuralWSDDecode[] nwds = new NeuralWSDDecode[concurent_threads];
+			for (int i = 0; i < concurent_threads; i++) {
 				nwds[i] = new NeuralWSDDecode(python_path, data_path, weights);
 				logger.info("WSD initialized");
 			}
@@ -70,16 +70,16 @@ public class MainParallel {
 			// splitting input
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
 			List<List<String>> listsToProcess = new ArrayList<>();
-			for (int i = 0; i < filepaths.size(); i += concurent_threads) {
-				listsToProcess.add(filepaths.subList(i,
-			            Math.min(i + concurent_threads, filepaths.size())));
+			int chunkSize = filepaths.size() / concurent_threads;
+			for (int i = 0; i < filepaths.size(); i += chunkSize) {
+				listsToProcess.add(filepaths.subList(i, Math.min(i + chunkSize, filepaths.size())));
+				logger.trace(String.format("", i, Math.min(i + chunkSize, filepaths.size())));
 			}
-
 
 			ExecutorService executor = Executors.newFixedThreadPool(concurent_threads);
 			for (int i = 0; i < concurent_threads; i++) {
-				executor.execute(new WSDWorker(listsToProcess.get(i), nwds[i], outputFolder, count, pipeline, lemmatizer,
-						t0, useOnlyAbstract, excludeWrite));
+				executor.execute(new WSDWorker(listsToProcess.get(i), nwds[i], outputFolder, count, pipeline,
+						lemmatizer, t0, useOnlyAbstract, excludeWrite));
 			}
 			executor.shutdown();
 			executor.awaitTermination(10, TimeUnit.DAYS);
