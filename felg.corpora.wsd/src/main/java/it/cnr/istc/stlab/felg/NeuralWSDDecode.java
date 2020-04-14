@@ -43,6 +43,7 @@ public class NeuralWSDDecode {
 		this.python_path = python_path;
 		this.data_path = data_path;
 		this.weights = weights;
+		this.batch_size=batch_size;
 		init(new String[] {});
 	}
 
