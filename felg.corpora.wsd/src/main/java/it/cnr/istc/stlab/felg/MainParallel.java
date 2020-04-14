@@ -16,6 +16,8 @@ import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import com.google.common.collect.Lists;
+
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import getalp.wsd.ufsac.utils.CorpusLemmatizer;
 import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
@@ -52,8 +54,6 @@ public class MainParallel {
 			int concurent_threads = config.getInt("concurrent_threads");
 			boolean useOnlyAbstract = config.getBoolean("useOnlyAbstract");
 			boolean excludeWrite = config.getBoolean("excludeWrite");
-			List<String> weights = new ArrayList<>();
-			weights.add(config.getString("weights"));
 
 			long t0 = System.currentTimeMillis();
 			AtomicLong count = new AtomicLong();
@@ -63,7 +63,8 @@ public class MainParallel {
 //			logger.info("WSD initialized");
 			NeuralWSDDecode[] nwds = new NeuralWSDDecode[concurent_threads];
 			for (int i = 0; i < concurent_threads; i++) {
-				nwds[i] = new NeuralWSDDecode(python_path, data_path, weights);
+				nwds[i] = new NeuralWSDDecode(python_path, data_path + i,
+						Lists.newArrayList((config.getString("weights").replace("/model/", "/model" + i + "/"))));
 				logger.info("WSD initialized");
 			}
 
