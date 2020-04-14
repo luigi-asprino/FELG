@@ -3,6 +3,7 @@ package it.cnr.istc.stlab.felg;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,7 +34,7 @@ public class WSDWorker implements Runnable {
 	private StanfordCoreNLP pipeline;
 	private CorpusLemmatizer lemmatizer;
 	private NeuralWSDDecode nwd;
-	private boolean useOnlyAbstract, excludeWrite;
+	private boolean useOnlyAbstract, excludeWrite, compressOutput = false;
 
 	public WSDWorker(List<String> filepaths, NeuralWSDDecode nwd, String outputFolder, AtomicLong count,
 			StanfordCoreNLP pipeline, CorpusLemmatizer lemmatizer, long t0, boolean useOnlyAbstract,
@@ -63,9 +64,24 @@ public class WSDWorker implements Runnable {
 				if (!FilenameUtils.getExtension(filepath).equals("bz2")) {
 					continue;
 				}
+
+				File inFolder = new File(filepath);
+
 				// create folders for files
-				BZip2CompressorOutputStream cos = new BZip2CompressorOutputStream(new FileOutputStream(
-						new File(outputFolder + "/" + FilenameUtils.getBaseName(filepath) + ".bz2")));
+				OutputStream os;
+				new File(outputFolder + "/" + inFolder.getParentFile().getName()).mkdir();
+				if (compressOutput) {
+					os = new BZip2CompressorOutputStream(
+							new FileOutputStream(new File(outputFolder + "/" + inFolder.getParentFile().getName() + "/"
+									+ FilenameUtils.getBaseName(filepath) + ".bz2")));
+					logger.trace("Out File: " + outputFolder + "/" + inFolder.getParentFile().getName() + "/"
+							+ FilenameUtils.getBaseName(filepath) + ".bz2");
+				} else {
+					os = new FileOutputStream(new File(outputFolder + "/" + inFolder.getParentFile().getName() + "/"
+							+ FilenameUtils.getBaseName(filepath)));
+					logger.trace("Out File: " + outputFolder + "/" + inFolder.getParentFile().getName() + "/"
+							+ FilenameUtils.getBaseName(filepath));
+				}
 
 				ArchiveReader ar = new ArchiveReader(filepath);
 				ArticleReader aar;
@@ -118,7 +134,7 @@ public class WSDWorker implements Runnable {
 						nwd.disambiguateBatch(sentenceBatch);
 
 						if (!excludeWrite) {
-							cos.write(("==== Start <" + aar.getTitle() + "> ====\n").getBytes());
+							os.write(("==== Start <" + aar.getTitle() + "> ====\n").getBytes());
 							sentenceBatch.forEach(wsdSentence -> {
 								try {
 									StringBuilder sb = new StringBuilder();
@@ -131,14 +147,14 @@ public class WSDWorker implements Runnable {
 										sb.append(' ');
 									});
 									sb.append('\n');
-									cos.write(sb.toString().getBytes());
-									cos.flush();
+									os.write(sb.toString().getBytes());
+									os.flush();
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
 							});
-							cos.write(("==== End <" + aar.getTitle() + "> ====\n").getBytes());
-							cos.flush();
+							os.write(("==== End <" + aar.getTitle() + "> ====\n").getBytes());
+							os.flush();
 						}
 
 						t1article = System.currentTimeMillis();
@@ -151,8 +167,8 @@ public class WSDWorker implements Runnable {
 						e.printStackTrace();
 					}
 				}
-				cos.flush();
-				cos.close();
+				os.flush();
+				os.close();
 			}
 			// closing wsd
 //			nwd.close();
