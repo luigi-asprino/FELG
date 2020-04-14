@@ -50,6 +50,10 @@ public class WSDWorker implements Runnable {
 
 	@Override
 	public void run() {
+		long t0article = 0;
+		long t1article = 0;
+		long timePerArticle = 0;
+		long elapsed = 0;
 		try {
 
 			for (String filepath : filepaths) {
@@ -61,6 +65,7 @@ public class WSDWorker implements Runnable {
 				ArticleReader aar;
 				while ((aar = ar.nextArticle()) != null) {
 					try {
+						t0article = System.currentTimeMillis();
 						Annotation annotation;
 
 						if (useOnlyAbstract) {
@@ -130,9 +135,11 @@ public class WSDWorker implements Runnable {
 							fos.close();
 						}
 
-						long elapsed = System.currentTimeMillis() - t0;
-						long timePerArticle = (long) ((double) elapsed / (double) count.incrementAndGet());
-						logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms ");
+						t1article = System.currentTimeMillis();
+						elapsed = System.currentTimeMillis() - t0;
+						timePerArticle = (long) ((double) elapsed / (double) count.incrementAndGet());
+						logger.trace("Processed " + aar.getTitle() + " " + timePerArticle + "ms "
+								+ (t1article - t0article) + "ms");
 					} catch (Exception e) {
 						logger.error("Error processing " + aar.getTitle());
 						e.printStackTrace();
