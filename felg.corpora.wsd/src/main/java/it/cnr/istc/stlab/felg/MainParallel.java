@@ -59,8 +59,13 @@ public class MainParallel {
 			AtomicLong count = new AtomicLong();
 
 			// initialize wsd
-			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
-			logger.info("WSD initialized");
+//			NeuralWSDDecode nwd = new NeuralWSDDecode(python_path, data_path, weights);
+//			logger.info("WSD initialized");
+			NeuralWSDDecode[] nwds =new NeuralWSDDecode[concurent_threads];
+			for(int i=0; i<concurent_threads;i++) {
+				nwds[i] = new NeuralWSDDecode(python_path, data_path, weights);
+				logger.info("WSD initialized");
+			}
 
 			// splitting input
 			List<String> filepaths = FileUtils.getFilesUnderTreeRec(config.getString("wikiFolder"));
@@ -73,7 +78,7 @@ public class MainParallel {
 
 			ExecutorService executor = Executors.newFixedThreadPool(concurent_threads);
 			for (int i = 0; i < concurent_threads; i++) {
-				executor.execute(new WSDWorker(listsToProcess.get(i), nwd, outputFolder, count, pipeline, lemmatizer,
+				executor.execute(new WSDWorker(listsToProcess.get(i), nwds[i], outputFolder, count, pipeline, lemmatizer,
 						t0, useOnlyAbstract, excludeWrite));
 			}
 			executor.shutdown();
