@@ -38,7 +38,7 @@ public class WSDWorker implements Runnable {
 
 	public WSDWorker(List<String> filepaths, NeuralWSDDecode nwd, String outputFolder, AtomicLong count,
 			StanfordCoreNLP pipeline, CorpusLemmatizer lemmatizer, long t0, boolean useOnlyAbstract,
-			boolean excludeWrite) {
+			boolean excludeWrite,boolean compressOutput) {
 		super();
 		this.filepaths = filepaths;
 		this.outputFolder = outputFolder;
@@ -49,6 +49,7 @@ public class WSDWorker implements Runnable {
 		this.t0 = t0;
 		this.useOnlyAbstract = useOnlyAbstract;
 		this.excludeWrite = excludeWrite;
+		this.compressOutput=compressOutput;
 	}
 
 	@Override

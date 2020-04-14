@@ -55,14 +55,15 @@ public class MainParallel {
 			int batch_size = config.getInt("batch_size");
 			boolean useOnlyAbstract = config.getBoolean("useOnlyAbstract");
 			boolean excludeWrite = config.getBoolean("excludeWrite");
+			boolean useCompression = config.getBoolean("useCompression");
 
 			AtomicLong count = new AtomicLong();
 
 			// initialize wsd
 			NeuralWSDDecode[] nwds = new NeuralWSDDecode[concurent_threads];
 			for (int i = 0; i < concurent_threads; i++) {
-				nwds[i] = new NeuralWSDDecode(python_path, data_path,
-						Lists.newArrayList(config.getString("weights")),batch_size);
+				nwds[i] = new NeuralWSDDecode(python_path, data_path, Lists.newArrayList(config.getString("weights")),
+						batch_size);
 				logger.info("WSD initialized");
 			}
 
@@ -79,7 +80,7 @@ public class MainParallel {
 			long t0 = System.currentTimeMillis();
 			for (int i = 0; i < concurent_threads; i++) {
 				executor.execute(new WSDWorker(listsToProcess.get(i), nwds[i], outputFolder, count, pipeline,
-						lemmatizer, t0, useOnlyAbstract, excludeWrite));
+						lemmatizer, t0, useOnlyAbstract, excludeWrite, useCompression));
 			}
 			executor.shutdown();
 			executor.awaitTermination(10, TimeUnit.DAYS);
