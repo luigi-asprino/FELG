@@ -1,6 +1,5 @@
 package it.cnr.istc.stlab.felg;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,10 +37,6 @@ public class MainParallel {
 				config = configs.properties("config.properties");
 			}
 
-			logger.info("Reading folder " + config.getString("wikiFolder"));
-			logger.info("Output Folder folder " + config.getString("outputFolder"));
-			logger.debug("Absolute path " + (new File(config.getString("wikiFolder"))).getAbsolutePath());
-
 			Properties props = new Properties();
 			props.setProperty("annotators", "tokenize, ssplit, pos");
 			StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
@@ -56,6 +51,15 @@ public class MainParallel {
 			boolean useOnlyAbstract = config.getBoolean("useOnlyAbstract");
 			boolean excludeWrite = config.getBoolean("excludeWrite");
 			boolean useCompression = config.getBoolean("useCompression");
+
+			logger.info("outputFolder " + outputFolder);
+			logger.info("python_path " + python_path);
+			logger.info("data_path " + data_path);
+			logger.info("concurent_threads " + concurent_threads);
+			logger.info("batch_size " + batch_size);
+			logger.info("useOnlyAbstract " + useOnlyAbstract);
+			logger.info("excludeWrite " + excludeWrite);
+			logger.info("useCompression " + useCompression);
 
 			AtomicLong count = new AtomicLong();
 
