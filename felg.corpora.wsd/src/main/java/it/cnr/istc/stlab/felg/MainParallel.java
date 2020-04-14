@@ -82,6 +82,11 @@ public class MainParallel {
 			}
 			executor.shutdown();
 			executor.awaitTermination(10, TimeUnit.DAYS);
+			
+			for (int i = 0; i < concurent_threads; i++) {
+				nwds[i].close();
+				logger.info("Closing WSD");
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
