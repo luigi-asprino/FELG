@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.jsoniter.JsonIterator;
+
 import getalp.wsd.common.utils.POSConverter;
 import getalp.wsd.common.utils.RegExp;
 import getalp.wsd.common.wordnet.WordnetHelper;
@@ -229,6 +231,69 @@ public class NeuralDisambiguatorReader /* extends DisambiguatorContextSentenceBa
 		return translations;
 	}
 
+	private List<Sentence> readPredictOutput(String senseTag, String confidenceTag, BufferedReader reader)
+			throws Exception {
+		List<Sentence> out = new ArrayList<>();
+		String line;
+		while ((line = reader.readLine()) != null) {
+			if (line.startsWith("{")) {
+				it.cnr.istc.stlab.felg.model.Sentence sbean = JsonIterator.deserialize(line,
+						it.cnr.istc.stlab.felg.model.Sentence.class);
+				out.add(sbean.getUFSACSentence());
+				continue;
+			}
+			Sentence sentence = out.get(out.size() - 1);
+			if (outputFeatures > 0) {
+				List<Word> words = sentence.getWords();
+				if (line == null || line.startsWith("Better speed can be achieved with apex installed")) {
+					continue;
+				}
+				if (extraLemma) {
+					int[][] output = parsePredictOutputExtraLemma(line);
+					propagatePredictOutputExtraLemma(words, output, senseTag, confidenceTag);
+				} else {
+					int[] output = parsePredictOutput(line);
+					propagatePredictOutput(words, output, senseTag, confidenceTag);
+				}
+			}
+
+		}
+//		List<Sentence> translations = new ArrayList<>();
+//		for (int i = 0; i < sentences.size(); i++) {
+//			Sentence sentence = sentences.get(i);
+//			if (outputFeatures > 0) {
+//				List<Word> words = sentence.getWords();
+//				String line = reader.readLine();
+//				if (line == null || line.startsWith("Better speed can be achieved with apex installed")) {
+//					i--;
+//					continue;
+//				}
+//				if (extraLemma) {
+//					int[][] output = parsePredictOutputExtraLemma(line);
+//					propagatePredictOutputExtraLemma(words, output, senseTag, confidenceTag);
+//				} else {
+//					int[] output = parsePredictOutput(line);
+//					propagatePredictOutput(words, output, senseTag, confidenceTag);
+//				}
+//			}
+//			// TODO: for (int i = 0 ; i < outputTranslations ; i++)
+//			if (outputTranslations > 0) {
+//				String line = reader.readLine();
+//				if (line.startsWith("Better speed can be achieved with apex installed")) {
+//					i--;
+//					continue;
+//				}
+//				if (line.isEmpty()) {
+//					line = "0";
+//				}
+//				String[] output = line.split(RegExp.anyWhiteSpaceGrouped.pattern());
+//				translations.add(processTranslationOutput(output));
+//			}
+//		}
+//		return translations;
+		return out;
+	}
+
 	private int[] parsePredictOutput(String line) {
 		String[] lineSplit = line.split(RegExp.anyWhiteSpaceGrouped.pattern());
 		int[] output = new int[lineSplit.length];
@@ -337,6 +402,11 @@ public class NeuralDisambiguatorReader /* extends DisambiguatorContextSentenceBa
 	public void readDisambiguationResultFromBufferedReader(List<Sentence> sentences, String senseTag,
 			String confidenceTag, BufferedReader br) throws Exception {
 		readPredictOutput(sentences, senseTag, confidenceTag, br);
+	}
+
+	public List<Sentence> readDisambiguationResultFromBufferedReader(String senseTag, String confidenceTag,
+			BufferedReader br) throws Exception {
+		return readPredictOutput(senseTag, confidenceTag, br);
 	}
 
 }
