@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.LogManager;
@@ -59,8 +60,11 @@ public class ReaderWorker implements Runnable {
 
 	public void readFile(String fileIn, String fileOut) throws Exception {
 		BufferedInputStream bis = new BufferedInputStream(new FileInputStream(fileIn));
-		BufferedReader br = new BufferedReader(new InputStreamReader(bis));
+		CompressorInputStream input = new CompressorStreamFactory().createCompressorInputStream(bis);
+		BufferedReader br = new BufferedReader(new InputStreamReader(input));
+		
 		List<Sentence> sentenceBatch = nwd.readDisambiguationResultFromBufferedReader("wsd", "", br);
+		
 		OutputStream os = new BZip2CompressorOutputStream(new FileOutputStream(new File(fileOut)));
 		sentenceBatch.forEach(wsdSentence -> {
 			try {
