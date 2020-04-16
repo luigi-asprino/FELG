@@ -235,11 +235,18 @@ public class NeuralDisambiguatorReader /* extends DisambiguatorContextSentenceBa
 			throws Exception {
 		List<Sentence> out = new ArrayList<>();
 		String line;
+		int c=0;
 		while ((line = reader.readLine()) != null) {
+			if(c%100==0) {
+				System.out.println(c);
+			}
 			if (line.startsWith("{")) {
 				it.cnr.istc.stlab.felg.model.Sentence sbean = JsonIterator.deserialize(line,
 						it.cnr.istc.stlab.felg.model.Sentence.class);
 				out.add(sbean.getUFSACSentence());
+				continue;
+			}
+			if(line.length()==0) {
 				continue;
 			}
 			Sentence sentence = out.get(out.size() - 1);
