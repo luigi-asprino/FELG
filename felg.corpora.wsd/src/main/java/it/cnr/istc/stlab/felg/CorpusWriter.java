@@ -27,7 +27,7 @@ public class CorpusWriter {
 	private static final Logger logger = LogManager.getLogger(CorpusWriter.class);
 
 	public static void main(String[] args) throws CompressorException, IOException {
-		logger.info("Running FELG");
+		logger.info("Running FELG - Corpus Writer");
 
 		try {
 			Configurations configs = new Configurations();

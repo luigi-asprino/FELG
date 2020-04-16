@@ -3,6 +3,8 @@ package it.cnr.istc.stlab.felg.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jsoniter.annotation.JsonIgnore;
+
 public class Sentence {
 
 	private List<Word> words;
@@ -33,6 +35,7 @@ public class Sentence {
 		return "Sentence [words=" + words + "]";
 	}
 
+	@JsonIgnore
 	public getalp.wsd.ufsac.core.Sentence getUFSACSentence() {
 		List<getalp.wsd.ufsac.core.Word> ufsacWords = new ArrayList<>();
 		words.forEach(w -> ufsacWords.add(w.getUFSACWord()));

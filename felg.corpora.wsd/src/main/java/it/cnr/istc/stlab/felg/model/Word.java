@@ -1,5 +1,7 @@
 package it.cnr.istc.stlab.felg.model;
 
+import com.jsoniter.annotation.JsonIgnore;
+
 public class Word {
 
 	private String token, lemma, pos;
@@ -43,6 +45,7 @@ public class Word {
 		this.pos = pos;
 	}
 
+	@JsonIgnore
 	public getalp.wsd.ufsac.core.Word getUFSACWord() {
 		getalp.wsd.ufsac.core.Word result = new getalp.wsd.ufsac.core.Word(token);
 		result.setAnnotation("pos", pos);
