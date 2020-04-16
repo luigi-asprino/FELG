@@ -240,10 +240,13 @@ public class NeuralDisambiguatorReader /* extends DisambiguatorContextSentenceBa
 			if(c%100==0) {
 				System.out.println(c);
 			}
+			System.out.println(line);
 			if (line.startsWith("{")) {
 				it.cnr.istc.stlab.felg.model.Sentence sbean = JsonIterator.deserialize(line,
 						it.cnr.istc.stlab.felg.model.Sentence.class);
+				System.out.println("adding sentence");
 				out.add(sbean.getUFSACSentence());
+				System.out.println("sentence added");
 				continue;
 			}
 			if(line.length()==0) {
