@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class FELGFrameAnnotation {
 	public static void main(String[] args) {
 		try {
 			Configurations configs = new Configurations();
-			Configuration config = configs.properties("config.properties");
+			Configuration config = configs.properties(args[0]);
 
 			logger.info(ConfigurationUtils.toString(config));
 
@@ -105,11 +106,14 @@ public class FELGFrameAnnotation {
 									CompressorStreamFactory.BZIP2, new FileOutputStream(new File(fileOut)));
 							JsonStream.serialize(a, os);
 							al.incrementAndGet();
-							if (al.get() % 100 == 0) {
+							if (al.get() % 1000 == 0) {
 								long t1 = System.currentTimeMillis();
 								long elapsed = t1 - t0;
 								int msPerArticle = (int) ((double) elapsed / (double) al.get());
-								logger.info(al.get() + "/" + numberOfFiles + " ::: " + msPerArticle + " ms");
+								long articles_to_process = numberOfFiles - al.longValue();
+								long finish = t1 + ((long) (articles_to_process * msPerArticle));
+								logger.info(al.get() + "/" + numberOfFiles + " ::: " + msPerArticle + " ms "
+										+ new Date(finish).toString());
 							}
 
 						} catch (CompressorException | IOException e) {
