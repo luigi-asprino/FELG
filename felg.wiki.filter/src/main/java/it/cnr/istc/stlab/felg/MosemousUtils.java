@@ -1,17 +1,17 @@
 package it.cnr.istc.stlab.felg;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import it.cnr.istc.stlab.lgu.commons.tables.CSVToJavaUtils;
 
 public class MosemousUtils {
 
 	public static Map<String, String> getMonosemousVerbs(String file) {
 		Map<String, String> result = new HashMap<>();
 
-		List<String[]> rows = CSVToJavaUtils.toStringMatrix(file, '\t');
+//		List<String[]> rows = CSVToJavaUtils.toStringMatrix(file, '\t');
+		List<String[]> rows = new ArrayList<>();
 
 		for (String[] row : rows) {
 			String word = row[0].replace("\"", "").replace('_', ' ');

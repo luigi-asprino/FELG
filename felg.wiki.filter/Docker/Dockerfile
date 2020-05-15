@@ -2,7 +2,7 @@ FROM maven:3.6.3-jdk-8
 
 RUN cd /opt  && \
 	git clone https://github.com/stlab-istc-cnr/FELG.git && \
-	cd felg.corpora.frameannotation/ && \
+	cd FELG/felg.corpora.frameannotation/ && \
 	mvn clean install && \
 	cd ../felg.wiki.filter/ && \
 	mvn clean install
