@@ -1,13 +1,8 @@
 package it.cnr.istc.stlab.felg.frameannotation;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -47,7 +42,7 @@ public class FELGFrameAnnotation {
 
 	private static Logger logger = LoggerFactory.getLogger(FELGFrameAnnotation.class);
 
-	private static final int BUFFER_SIZE = 1024;
+	
 
 	public static void main(String[] args) {
 		try {
@@ -76,7 +71,7 @@ public class FELGFrameAnnotation {
 			Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
 					.filter(f -> FilenameUtils.isExtension(f.getFileName().toString(), "bz2")).parallel().forEach(f -> {
 						try {
-							AnnotatedArticle a = JsonIterator.deserialize(readBZ2File(f.toString()),
+							AnnotatedArticle a = JsonIterator.deserialize(Utils.readBZ2File(f.toString()),
 									AnnotatedArticle.class);
 							String folderOut = wikiFolderOut + "/" + f.getParent().getParent().getFileName() + "/"
 									+ f.getParent().getFileName();
@@ -129,19 +124,7 @@ public class FELGFrameAnnotation {
 		}
 	}
 
-	private static String readBZ2File(String file) throws CompressorException, IOException {
-		FileInputStream fin = new FileInputStream(file);
-		InputStream is = new CompressorStreamFactory()
-				.createCompressorInputStream(new BufferedInputStream(fin, BUFFER_SIZE));
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		StringBuilder sb = new StringBuilder();
-		String line;
-		while ((line = br.readLine()) != null) {
-			sb.append(line);
-		}
 
-		return sb.toString();
-	}
 
 	private static ImmutableMap<String, List<String>> getBNSynsetToFrameMap(String fn2syn) {
 		ImmutableMap.Builder<String, List<String>> syn2Frames = new ImmutableMap.Builder<String, List<String>>();
