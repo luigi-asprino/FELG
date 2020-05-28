@@ -44,13 +44,16 @@ public class SentenceStatsCreator {
 
 			FileOutputStream fos = new FileOutputStream(new File(statFilePath));
 
+			logger.info("Counting files");
 			final long numberOfFiles = Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
 					.filter(f -> FilenameUtils.isExtension(f.getFileName().toString(), "bz2")).count();
 			AtomicLong numberOfProcessedPages = new AtomicLong(0);
+			logger.info("Number of files " + numberOfFiles);
 
 			final long t0 = System.currentTimeMillis();
 			MessageDigest md5 = MessageDigest.getInstance("MD5");
-
+			
+			logger.info("Start processing");
 			Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
 					.filter(f -> FilenameUtils.isExtension(f.getFileName().toString(), "bz2")).parallel().forEach(f -> {
 						try {
