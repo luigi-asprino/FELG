@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ConfigurationUtils;
@@ -51,7 +52,6 @@ public class SentenceStatsCreator {
 			logger.info("Number of files " + numberOfFiles);
 
 			final long t0 = System.currentTimeMillis();
-			MessageDigest md5 = MessageDigest.getInstance("MD5");
 
 			logger.info("Start processing");
 			Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
@@ -73,7 +73,7 @@ public class SentenceStatsCreator {
 									Collections.sort(framesOrdered);
 
 									try {
-										String md5D = new String(md5.digest(String.join("", framesOrdered).getBytes()));
+										String md5D = DigestUtils.md5Hex(String.join("", framesOrdered));
 										StringBuilder toWrite = new StringBuilder(1024);
 										toWrite.append(f.toString());
 										toWrite.append('\t');
@@ -112,9 +112,6 @@ public class SentenceStatsCreator {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e1) {
-
-			e1.printStackTrace();
 		}
 	}
 
