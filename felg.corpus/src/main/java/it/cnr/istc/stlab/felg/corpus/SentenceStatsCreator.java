@@ -40,7 +40,7 @@ public class SentenceStatsCreator {
 			logger.info(ConfigurationUtils.toString(config));
 
 			String wikiFolderPath = config.getString("wikiFolder");
-			String statFilePath = config.getString("statSennceFile");
+			String statFilePath = config.getString("statSentenceFile");
 
 			FileOutputStream fos = new FileOutputStream(new File(statFilePath));
 
