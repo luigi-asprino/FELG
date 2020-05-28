@@ -66,19 +66,26 @@ public class SentenceStatsCreator {
 										frames.addAll(annotation.getFrames());
 									}
 								});
+
 								if (!frames.isEmpty()) {
 									List<String> framesOrdered = new ArrayList<>();
 									framesOrdered.addAll(frames);
 									Collections.sort(framesOrdered);
-									StringBuilder toWrite = new StringBuilder(1024);
-									toWrite.append(f.toString());
-									toWrite.append('\t');
-									toWrite.append(i);
-									toWrite.append('\t');
-									toWrite.append(new String(md5.digest(String.join("", framesOrdered).getBytes())));
-									toWrite.append('\n');
-									fos.write(toWrite.toString().getBytes());
-									fos.flush();
+
+									try {
+										String md5D = new String(md5.digest(String.join("", framesOrdered).getBytes()));
+										StringBuilder toWrite = new StringBuilder(1024);
+										toWrite.append(f.toString());
+										toWrite.append('\t');
+										toWrite.append(i);
+										toWrite.append('\t');
+										toWrite.append(md5D);
+										toWrite.append('\n');
+										fos.write(toWrite.toString().getBytes());
+										fos.flush();
+									} catch (Exception e) {
+										logger.error(e.getMessage());
+									}
 								}
 							}
 
