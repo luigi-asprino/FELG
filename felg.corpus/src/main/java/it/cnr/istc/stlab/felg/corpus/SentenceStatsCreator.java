@@ -52,7 +52,7 @@ public class SentenceStatsCreator {
 
 			final long t0 = System.currentTimeMillis();
 			MessageDigest md5 = MessageDigest.getInstance("MD5");
-			
+
 			logger.info("Start processing");
 			Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
 					.filter(f -> FilenameUtils.isExtension(f.getFileName().toString(), "bz2")).parallel().forEach(f -> {
@@ -66,18 +66,20 @@ public class SentenceStatsCreator {
 										frames.addAll(annotation.getFrames());
 									}
 								});
-								List<String> framesOrdered = new ArrayList<>();
-								framesOrdered.addAll(frames);
-								Collections.sort(framesOrdered);
-								StringBuilder toWrite = new StringBuilder(1024);
-								toWrite.append(f.toString());
-								toWrite.append('\t');
-								toWrite.append(i);
-								toWrite.append('\t');
-								toWrite.append(new String(md5.digest(String.join("", framesOrdered).getBytes())));
-								toWrite.append('\n');
-								fos.write(toWrite.toString().getBytes());
-								fos.flush();
+								if (!frames.isEmpty()) {
+									List<String> framesOrdered = new ArrayList<>();
+									framesOrdered.addAll(frames);
+									Collections.sort(framesOrdered);
+									StringBuilder toWrite = new StringBuilder(1024);
+									toWrite.append(f.toString());
+									toWrite.append('\t');
+									toWrite.append(i);
+									toWrite.append('\t');
+									toWrite.append(new String(md5.digest(String.join("", framesOrdered).getBytes())));
+									toWrite.append('\n');
+									fos.write(toWrite.toString().getBytes());
+									fos.flush();
+								}
 							}
 
 							if (numberOfProcessedPages.get() % 1000 == 0) {
