@@ -97,8 +97,8 @@ public class SentenceStatsCreator {
 										fos_set.write(toWriteSet.toString().getBytes());
 										fos_set.flush();
 									} catch (Exception e) {
-										logger.error(e.getMessage());
 										e.printStackTrace();
+										logger.error("Writing error " + e.getMessage()+" "+e.getClass().toGenericString());
 									}
 								}
 							}
