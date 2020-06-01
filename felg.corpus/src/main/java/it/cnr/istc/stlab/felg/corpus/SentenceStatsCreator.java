@@ -3,6 +3,7 @@ package it.cnr.istc.stlab.felg.corpus;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ConfigurationUtils;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -42,8 +44,10 @@ public class SentenceStatsCreator {
 			String statFilePath = config.getString("statSentenceFile");
 			String setFilePath = config.getString("setFilePath");
 
-			FileOutputStream fos = new FileOutputStream(new File(statFilePath));
-			FileOutputStream fos_set = new FileOutputStream(new File(setFilePath));
+			OutputStream fos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2,
+					new FileOutputStream(new File(statFilePath)));
+			OutputStream fos_set = new CompressorStreamFactory().createCompressorOutputStream(
+					CompressorStreamFactory.BZIP2, new FileOutputStream(new File(setFilePath)));
 
 			logger.info("Counting files");
 			final long numberOfFiles = Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
@@ -123,6 +127,8 @@ public class SentenceStatsCreator {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (CompressorException e1) {
+			e1.printStackTrace();
 		}
 	}
 
