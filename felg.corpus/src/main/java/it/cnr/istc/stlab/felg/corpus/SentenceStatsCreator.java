@@ -40,8 +40,10 @@ public class SentenceStatsCreator {
 
 			String wikiFolderPath = config.getString("wikiFolder");
 			String statFilePath = config.getString("statSentenceFile");
+			String setFilePath = config.getString("setFilePath");
 
 			FileOutputStream fos = new FileOutputStream(new File(statFilePath));
+			FileOutputStream fos_set = new FileOutputStream(new File(setFilePath));
 
 			logger.info("Counting files");
 			final long numberOfFiles = Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
@@ -71,7 +73,8 @@ public class SentenceStatsCreator {
 									Collections.sort(framesOrdered);
 
 									try {
-										String md5D = DigestUtils.md5Hex(String.join("", framesOrdered));
+										String frameString = String.join("", framesOrdered);
+										String md5D = DigestUtils.md5Hex(frameString);
 										StringBuilder toWrite = new StringBuilder(1024);
 										toWrite.append(f.toString());
 										toWrite.append('\t');
@@ -81,6 +84,14 @@ public class SentenceStatsCreator {
 										toWrite.append('\n');
 										fos.write(toWrite.toString().getBytes());
 										fos.flush();
+
+										StringBuilder toWriteSet = new StringBuilder(1024);
+										toWriteSet.append(md5D);
+										toWriteSet.append('\t');
+										toWriteSet.append(frameString);
+										toWriteSet.append('\n');
+										fos_set.write(toWriteSet.toString().getBytes());
+										fos_set.flush();
 									} catch (Exception e) {
 										logger.error(e.getMessage());
 									}
@@ -105,6 +116,8 @@ public class SentenceStatsCreator {
 
 			fos.flush();
 			fos.close();
+			fos_set.flush();
+			fos_set.close();
 
 		} catch (ConfigurationException e) {
 			e.printStackTrace();
