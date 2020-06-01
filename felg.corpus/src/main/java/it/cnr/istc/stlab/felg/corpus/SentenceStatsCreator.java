@@ -58,6 +58,7 @@ public class SentenceStatsCreator {
 			logger.info("Start processing");
 			Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
 					.filter(f -> FilenameUtils.isExtension(f.getFileName().toString(), "bz2")).parallel().forEach(f -> {
+						String relativePath = f.toString().replace(wikiFolderPath, "");
 						try {
 							AnnotatedArticle a = JsonIterator.deserialize(Utils.readBZ2File(f.toString()),
 									AnnotatedArticle.class);
@@ -75,10 +76,10 @@ public class SentenceStatsCreator {
 									Collections.sort(framesOrdered);
 
 									try {
-										String frameString = String.join("", framesOrdered);
+										String frameString = String.join(" ", framesOrdered);
 										String md5D = DigestUtils.md5Hex(frameString);
 										StringBuilder toWrite = new StringBuilder(1024);
-										toWrite.append(f.toString());
+										toWrite.append(relativePath);
 										toWrite.append('\t');
 										toWrite.append(i);
 										toWrite.append('\t');
