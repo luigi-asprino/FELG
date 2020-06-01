@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ConfigurationUtils;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -44,10 +43,9 @@ public class SentenceStatsCreator {
 			String statFilePath = config.getString("statSentenceFile");
 			String setFilePath = config.getString("setFilePath");
 
-			OutputStream fos = new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2,
-					new FileOutputStream(new File(statFilePath)));
-			OutputStream fos_set = new CompressorStreamFactory().createCompressorOutputStream(
-					CompressorStreamFactory.BZIP2, new FileOutputStream(new File(setFilePath)));
+			OutputStream fos = new FileOutputStream(new File(statFilePath));
+
+			OutputStream fos_set = new FileOutputStream(new File(setFilePath));
 
 			logger.info("Counting files");
 			final long numberOfFiles = Files.walk(Paths.get(wikiFolderPath)).filter(Files::isRegularFile)
@@ -98,7 +96,8 @@ public class SentenceStatsCreator {
 										fos_set.flush();
 									} catch (Exception e) {
 										e.printStackTrace();
-										logger.error("Writing error " + e.getMessage()+" "+e.getClass().toGenericString());
+										logger.error("Writing error " + e.getMessage() + " "
+												+ e.getClass().toGenericString());
 									}
 								}
 							}
@@ -128,8 +127,6 @@ public class SentenceStatsCreator {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (CompressorException e1) {
-			e1.printStackTrace();
 		}
 	}
 
