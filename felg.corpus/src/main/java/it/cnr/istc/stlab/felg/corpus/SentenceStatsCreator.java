@@ -98,6 +98,7 @@ public class SentenceStatsCreator {
 										fos_set.flush();
 									} catch (Exception e) {
 										logger.error(e.getMessage());
+										e.printStackTrace();
 									}
 								}
 							}
