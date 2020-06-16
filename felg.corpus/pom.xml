@@ -39,6 +39,19 @@
 		</dependency>
 
 
+		<dependency>
+			<groupId>it.cnr.istc.stlab</groupId>
+			<artifactId>lgu.commons.lang</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>it.cnr.istc.stlab</groupId>
+			<artifactId>lgu.commons.io</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+
 
 
 		<!-- Commons configuration -->
