@@ -31,6 +31,14 @@
 			<version>0.0.1</version>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/com.opencsv/opencsv -->
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>5.2</version>
+		</dependency>
+
+
 		<!-- https://mvnrepository.com/artifact/tech.tablesaw/tablesaw-core -->
 		<dependency>
 			<groupId>tech.tablesaw</groupId>
