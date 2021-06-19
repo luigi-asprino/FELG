@@ -191,7 +191,7 @@ def get_transformer(sents, sents_spacy, model,tokenizer,batch_size):
     Vectors = dict()
     with torch.no_grad():
         Sents = []
-        indices = [x for x in range(0,len(sents),batch_size)] + [len(sents)]
+        indices = [x for x in range(0,len(sents),int(batch_size))] + [len(sents)]
         for idx in range(len(indices[:-1])):
             sents_ = sents[indices[idx]:indices[idx+1]]
             tokens = [tokenizer.tokenize(sent) for sent in sents_]
