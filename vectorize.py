@@ -244,7 +244,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     import spacy
     parser = ArgumentParser(description='Script to vectorize raw text.')
-    args = parser.parse_args()
+    #args = parser.parse_args()
     parser.add_argument(
         '-d', '--device', default='cuda',
         help='Device to use. (cpu, cuda, cuda:0 etc.)')
@@ -260,7 +260,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-wp', '--wiki_path', default="/media/hdd/wiki/wiki_20210520_json_links",
         help='Name of the SpaCy model')
-
+    args = parser.parse_args()
     wiki_path = args.wiki_path
     batch_size = args.batch_size
     pretrained_weights = args.model
