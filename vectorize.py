@@ -182,10 +182,11 @@ def text2sents(text, nlp):
     sents_spacy = [[t.text for t in s] for s in doc.sents]
     return [sents, sents_spacy]
 
-def get_transformer(sents, sents_spacy, model,tokenizer,batch_size):
+def get_transformer(sents, sents_spacy, model,tokenizer,batch_size, d):
     #device = torch.device("cuda")
     layers_idxs = [12, 22]
-    device = torch.device("cpu")
+    #device = torch.device("cpu")
+    device = torch.device(d)
     model.eval()
     model.to(device)
     Vectors = dict()
@@ -283,7 +284,7 @@ if __name__ == '__main__':
                     Vectors[item['id']] = {}
                     cleaned_text = clean_text(item['text'])
                     sents, sents_spacy = text2sents(cleaned_text, nlp)
-                    vectors = get_transformer(sents, sents_spacy, model_class, tokenizer_class, batch_size)
+                    vectors = get_transformer(sents, sents_spacy, model_class, tokenizer_class, batch_size, args.device)
                     Vectors[item['id']]['vectors'] = vectors
                     Vectors[item['id']]['title'] = item['title']
                     Vectors[item['id']]['url'] = item['url']
