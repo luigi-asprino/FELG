@@ -1,7 +1,7 @@
 import collections
 import torch
 import time
-import pickle
+import pickle5 as pickle
 import re
 import json_lines
 import os
